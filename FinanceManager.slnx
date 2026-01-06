@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="FinanceManaager.Data/FinanceManager.Data.csproj" />
+  <Project Path="FinanceManager.ConsoleApp/FinanceManager.ConsoleApp.csproj" />
+  <Project Path="FinanceManager.Core/FinanceManager.Core.csproj" />
+</Solution>

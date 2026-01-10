@@ -17,5 +17,17 @@ namespace FinanceManager.Core
         public decimal AmountRemaining => TargetAmount - CurrentAmount;
 
         public bool IsAchieved => CurrentAmount >= TargetAmount;
+
+        public GoalPriorityEnum Priority { get; set; } = GoalPriorityEnum.Low;
+
+        public enum GoalPriorityEnum
+        {
+            Low = 0,
+            Normal,
+            Medium,
+            Important,
+            High,
+            Critical
+        }
     }
 }

@@ -1,4 +1,5 @@
-﻿using FinanceManager.Core;
+﻿using FinanceManager.ConsoleApp;
+using FinanceManager.Core;
 using FinanceManager.Data;
 
 Console.WriteLine("Welcome to Finance Manager!");
@@ -6,58 +7,42 @@ Console.WriteLine("Welcome to Finance Manager!");
 using var dbContext = new FinanceDbContext();
 
 dbContext.Database.EnsureCreated();
+var ui = new UIHandler(dbContext);
 
 while (true)
 {
-    Console.WriteLine("// Menu Options");
-    Console.WriteLine("1. Add Goal");
-    Console.WriteLine("2. View Goals");
-    Console.WriteLine("3. Exit");
-    Console.Write("Select an option: ");
+    ui.ShowMenu();
     var choice = Console.ReadLine();
 
     switch (choice)
     {
-        case "1":
-            Console.Write("Enter goal name: ");
-            var name = Console.ReadLine();
-            Console.Write("Enter target amount: ");
-            var amountInput = Console.ReadLine();
-            Console.Write("Enter target date (yyyy-mm-dd) or leave blank: ");
-            var dateInput = Console.ReadLine();
-            if (!string.IsNullOrWhiteSpace(name) && decimal.TryParse(amountInput, out var targetAmount) && DateTime.TryParse(dateInput, out var targetDate))
-            {
-                var Goal = new Goal
-                {
-                    Name = name,
-                    TargetAmount = targetAmount,
-                    CurrentAmount = 0m,
-                    TargetDate = targetDate
-                };
-                dbContext.Goals.Add(Goal);
-                dbContext.SaveChanges();
-                Console.WriteLine("Goal added successfully");
-            }
-            else
-            {
-                Console.WriteLine("Invalid amount or date. Please try again.");
-            }
+        case "1": //add goal
+            ui.AddGoal();
             break;
-        case "2":
+        case "2": //show goals
             Console.WriteLine("Your current goals");
-            var goals = dbContext.Goals.ToList();
-                        
-            foreach (var goal in goals)
-            {
-                Console.WriteLine($"ID: {goal.Id} \n Name: {goal.Name}\n TargetDate: {goal.TargetDate}\n Target Amount: {goal.TargetAmount}\n Current Amount: {goal.CurrentAmount}\n Remaining Amount: {goal.AmountRemaining}");
-            }
+            ui.ShowGoals();
             break;
 
-        case "3":
-            Console.WriteLine("Exit...");
+        case "3": //modify goal
+            ui.ModifyGoal(ui.TakeGoalToModify());
+            
+            break;
+
+        case "4": //remove specific goal
+
+            break;
+
+        case "5": //remove all goals
+            break;
+
+        case "6": //exit
             return;
+
         default:
             Console.WriteLine("Wrong choice");
             break;
     } 
 }
+
+

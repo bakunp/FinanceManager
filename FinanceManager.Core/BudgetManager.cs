@@ -27,6 +27,11 @@ namespace FinanceManager.Core
             return Goals;
         }
 
+        public void SetPriority(Goal goal, Goal.GoalPriorityEnum priority)
+        {
+            var targetGoal = Goals.Find(f => f.Name == goal.Name);
+        }
+
         public void DistributeFounds(decimal amount)
         {
             if (Goals.Count == 0 || amount <= 0)

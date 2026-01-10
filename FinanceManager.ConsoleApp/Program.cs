@@ -25,15 +25,16 @@ while (true)
             break;
 
         case "3": //modify goal
-            ui.ModifyGoal(ui.TakeGoalToModify());
+            ui.ModifyGoal(ui.FindGoal());
             
             break;
 
         case "4": //remove specific goal
-
+            ui.RemoveSpecificGoal(ui.FindGoal());
             break;
 
         case "5": //remove all goals
+            ui.RemoveAllGoals();
             break;
 
         case "6": //exit

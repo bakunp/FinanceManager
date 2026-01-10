@@ -217,7 +217,7 @@ namespace FinanceManager.ConsoleApp
             return (Goal.GoalPriorityEnum)(targetPriority);
         }
 
-        public Goal? TakeGoalToModify()
+        public Goal? FindGoal()
         {
             Console.WriteLine("Choose the goal to modify by choosing its ID (or press enter  to skip): ");
             ShowGoals();
@@ -240,14 +240,31 @@ namespace FinanceManager.ConsoleApp
                 else
                 {
                     Console.WriteLine("Goal not found. Please try again.");
-                    return TakeGoalToModify();
+                    return FindGoal();
                 }
             }
             else
             {
                 Console.WriteLine("Invalid ID. Please enter a valid one.");
-                return TakeGoalToModify();
+                return FindGoal();
             }
+        }
+
+        public void RemoveSpecificGoal(Goal? goal)
+        {
+            if (goal == null)
+            {
+                return;
+            }
+            _dbContext.Goals.Remove(goal);
+            _dbContext.SaveChanges();
+        }
+
+        public void RemoveAllGoals()
+        {
+            var goals = _dbContext.Goals.ToList();
+            _dbContext.Goals.RemoveRange(goals);
+            _dbContext.SaveChanges();
         }
 
     }

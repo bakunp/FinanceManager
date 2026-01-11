@@ -37,7 +37,10 @@ while (true)
             ui.RemoveAllGoals();
             break;
 
-        case "6": //exit
+        case "6": //add founds
+            ui.AddFoundsToGoals();
+            break;
+        case "7": //exit
             return;
 
         default:

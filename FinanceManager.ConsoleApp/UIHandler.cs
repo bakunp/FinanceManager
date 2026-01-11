@@ -18,7 +18,8 @@ namespace FinanceManager.ConsoleApp
             Console.WriteLine("3. Modify goal");
             Console.WriteLine("4. Remove Specific Goal");
             Console.WriteLine("5. Remove All Goals");
-            Console.WriteLine("6. Exit");
+            Console.WriteLine("6. Add Founds to Goals");
+            Console.WriteLine("7. Exit");
             Console.Write("Select an option: ");
         }
 
@@ -36,7 +37,7 @@ namespace FinanceManager.ConsoleApp
                 Priority = priority
             };
             _dbContext.Goals.Add(goal);
-            _dbContext.SaveChanges();
+            SaveChanges();
             Console.WriteLine("Goal added successfully");
         }
 
@@ -63,7 +64,7 @@ namespace FinanceManager.ConsoleApp
             goal.TargetDate = date;
             goal.Priority = priority;
 
-            _dbContext.SaveChanges();
+            SaveChanges();
         }
 
         static (string, decimal, DateTime?, Goal.GoalPriorityEnum) GetInputData()
@@ -137,7 +138,7 @@ namespace FinanceManager.ConsoleApp
         {
             var amountInput = Console.ReadLine();
 
-            if(string.IsNullOrWhiteSpace(amountInput))
+            if (string.IsNullOrWhiteSpace(amountInput))
             {
                 return goal.TargetAmount;
             }
@@ -257,15 +258,69 @@ namespace FinanceManager.ConsoleApp
                 return;
             }
             _dbContext.Goals.Remove(goal);
-            _dbContext.SaveChanges();
+            SaveChanges();
         }
 
         public void RemoveAllGoals()
         {
             var goals = _dbContext.Goals.ToList();
             _dbContext.Goals.RemoveRange(goals);
+            SaveChanges();
+        }
+
+        public void AddFoundsToGoals()
+        {
+            Console.Write("Enter amount to add to goals: ");
+            var amountInput = Console.ReadLine();
+            if (!decimal.TryParse(amountInput, out var amount) || amount <= 0)
+            {
+                Console.WriteLine("Invalid amount.");
+                return;
+            }
+
+
+            var goals = _dbContext.Goals.Where(g => g.CurrentAmount < g.TargetAmount).ToList();
+            var prioritySum = PrioritySum(goals);
+
+            if (prioritySum == 0)
+            {
+                Console.WriteLine("No goals with priority found to allocate funds.");
+                return;
+            }
+
+            var onePointValue = amount / prioritySum;
+            foreach (var goal in goals)
+            {
+                var amountToAdd = Math.Round(onePointValue * (int)goal.Priority, 2);
+                MakeTransaction(goal, amountToAdd);
+                goal.CurrentAmount += amountToAdd;
+            }
+            SaveChanges();
+        }
+
+        public static decimal PrioritySum(List<Goal> goals)
+        {
+            var sum = goals.Where(g => g.Priority > 0).Sum(g => (int)g.Priority);
+
+            return sum;
+        }
+
+        public void SaveChanges()
+        {
             _dbContext.SaveChanges();
         }
 
+        public void MakeTransaction(Goal goal, decimal amount)
+        {
+            Transaction transaction = new()
+            {
+                Goal = goal,
+                Amount = amount,
+                Date = DateTime.Now,
+                Description = "Automatic fund allocation"
+            };
+            _dbContext.Transactions.Add(transaction);
+        }
     }
+
 }

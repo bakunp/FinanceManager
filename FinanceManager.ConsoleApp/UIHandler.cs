@@ -10,6 +10,7 @@ namespace FinanceManager.ConsoleApp
     {
         private readonly FinanceDbContext _dbContext = dbContext;
 
+        const string AutoAllocationDesc = "Automatic fund allocation";
         public void ShowMenu()
         {
             Console.WriteLine("// Menu Options");
@@ -278,8 +279,8 @@ namespace FinanceManager.ConsoleApp
                 return;
             }
 
-
             var goals = _dbContext.Goals.Where(g => g.CurrentAmount < g.TargetAmount).ToList();
+            AdjustPriorityBasedOnTime(goals);
             var prioritySum = PrioritySum(goals);
 
             if (prioritySum == 0)
@@ -295,7 +296,9 @@ namespace FinanceManager.ConsoleApp
                 MakeTransaction(goal, amountToAdd);
                 goal.CurrentAmount += amountToAdd;
             }
+
             SaveChanges();
+            CheckSumOfTransactions(amount);
         }
 
         public static decimal PrioritySum(List<Goal> goals)
@@ -317,9 +320,47 @@ namespace FinanceManager.ConsoleApp
                 Goal = goal,
                 Amount = amount,
                 Date = DateTime.Now,
-                Description = "Automatic fund allocation"
+                Description = AutoAllocationDesc
             };
             _dbContext.Transactions.Add(transaction);
+        }
+
+        public void CheckSumOfTransactions(decimal amount)
+        {
+            var time = DateTime.Now.AddSeconds(-10);
+            var transactions = _dbContext.Transactions.Where(t => t.Description == AutoAllocationDesc && t.Date >= time).Sum(t => t.Amount);
+
+            if (transactions != amount)
+            {
+                decimal diff = amount - transactions;
+                Console.WriteLine($"Automatically allocated missed founds to the goals with the most priority. Assigned: {diff}PLN");
+            }
+            SaveChanges();
+        }
+
+        public static void AdjustPriorityBasedOnTime(List<Goal> goals)
+        {
+            foreach (var goal in goals)
+            {
+                if (goal.TargetDate != null)
+                {
+                    TimeSpan timeDifference = goal.TargetDate.Value - DateTime.Now;
+                    var daysRemaining = timeDifference.TotalDays;
+
+                    if (daysRemaining <= 62)
+                    {
+                        goal.Priority += 1;
+                        Console.WriteLine($"Goal '{goal.Name}' target date is close. Automatically increased priority.");
+                    }
+
+                    if (daysRemaining <= 31)
+                    {
+                        goal.Priority += 2;
+                        Console.WriteLine($"Goal '{goal.Name}' is nearing its target date. Automatically increased priority.");
+                    }
+                }
+            }
+            
         }
     }
 

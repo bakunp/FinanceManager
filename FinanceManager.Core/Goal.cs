@@ -22,6 +22,10 @@ namespace FinanceManager.Core
 
         public List<Transaction> Transactions { get; set; } = new List<Transaction>();
 
+        public int PriorityBoosted { get; set; } = 0;
+
+        public int EffectivePriority => (int)Priority + PriorityBoosted;
+
         public enum GoalPriorityEnum
         {
             Low = 1,

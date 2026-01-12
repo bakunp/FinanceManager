@@ -11,6 +11,7 @@ namespace FinanceManager.ConsoleApp
         private readonly FinanceDbContext _dbContext = dbContext;
 
         const string AutoAllocationDesc = "Automatic fund allocation";
+        const string RoundAllocationDesc = "Rounding correction";
         public void ShowMenu()
         {
             Console.WriteLine("// Menu Options");
@@ -303,7 +304,7 @@ namespace FinanceManager.ConsoleApp
 
         public static decimal PrioritySum(List<Goal> goals)
         {
-            var sum = goals.Where(g => g.Priority > 0).Sum(g => (int)g.Priority);
+            var sum = goals.Where(g => g.Priority > 0).Sum(g => g.EffectivePriority);
 
             return sum;
         }
@@ -313,14 +314,14 @@ namespace FinanceManager.ConsoleApp
             _dbContext.SaveChanges();
         }
 
-        public void MakeTransaction(Goal goal, decimal amount)
+        public void MakeTransaction(Goal goal, decimal amount, string description = AutoAllocationDesc)
         {
             Transaction transaction = new()
             {
                 Goal = goal,
                 Amount = amount,
                 Date = DateTime.Now,
-                Description = AutoAllocationDesc
+                Description = description
             };
             _dbContext.Transactions.Add(transaction);
         }
@@ -333,6 +334,8 @@ namespace FinanceManager.ConsoleApp
             if (transactions != amount)
             {
                 decimal diff = amount - transactions;
+                MakeTransaction(_dbContext.Goals.OrderByDescending(g => g.Priority).First(), diff, RoundAllocationDesc);
+                _dbContext.Goals.OrderByDescending(g => g.Priority).First().CurrentAmount += diff;
                 Console.WriteLine($"Automatically allocated missed founds to the goals with the most priority. Assigned: {diff}PLN");
             }
             SaveChanges();
@@ -349,18 +352,18 @@ namespace FinanceManager.ConsoleApp
 
                     if (daysRemaining <= 62)
                     {
-                        goal.Priority += 1;
+                        goal.PriorityBoosted = 1;
+
                         Console.WriteLine($"Goal '{goal.Name}' target date is close. Automatically increased priority.");
                     }
 
                     if (daysRemaining <= 31)
                     {
-                        goal.Priority += 2;
+                        goal.PriorityBoosted = 2;
                         Console.WriteLine($"Goal '{goal.Name}' is nearing its target date. Automatically increased priority.");
                     }
                 }
             }
-            
         }
     }
 

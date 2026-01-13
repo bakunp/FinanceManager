@@ -12,6 +12,8 @@ namespace FinanceManager.ConsoleApp
 
         const string AutoAllocationDesc = "Automatic fund allocation";
         const string RoundAllocationDesc = "Rounding correction";
+        const string FindGoalToModify = "Choose the goal to modify by choosing its ID (or press enter  to skip): ";
+        const string FindGoalToManuallyAddFounds = "Choose the goal to add founds to by choosing its ID (or press enter  to skip): ";
         public void ShowMenu()
         {
             Console.WriteLine("// Menu Options");
@@ -22,6 +24,13 @@ namespace FinanceManager.ConsoleApp
             Console.WriteLine("5. Remove All Goals");
             Console.WriteLine("6. Add Founds to Goals");
             Console.WriteLine("7. Exit");
+            Console.Write("Select an option: ");
+        }
+
+        public void ShowAddFoundsMenu()
+        {
+            Console.WriteLine("1. Add automatically.");
+            Console.WriteLine("2. Add manually.");
             Console.Write("Select an option: ");
         }
 
@@ -220,36 +229,36 @@ namespace FinanceManager.ConsoleApp
             return (Goal.GoalPriorityEnum)(targetPriority);
         }
 
-        public Goal? FindGoal()
+        public Goal? FindGoal(string message = FindGoalToModify)
         {
-            Console.WriteLine("Choose the goal to modify by choosing its ID (or press enter  to skip): ");
+            Console.WriteLine($"{message}");
             ShowGoals();
             var goalID = Console.ReadLine();
 
             if (string.IsNullOrWhiteSpace(goalID))
             {
-                Console.WriteLine("Modification cancelled.");
+                Console.WriteLine("Action cancelled.");
                 return null;
             }
 
             if (int.TryParse(goalID, out var validGoalID))
             {
-                var goalToModify = _dbContext.Goals.Find(validGoalID);
+                var goalToFind = _dbContext.Goals.Find(validGoalID);
 
-                if (goalToModify != null)
+                if (goalToFind != null)
                 {
-                    return goalToModify;
+                    return goalToFind;
                 }
                 else
                 {
                     Console.WriteLine("Goal not found. Please try again.");
-                    return FindGoal();
+                    return FindGoal(message);
                 }
             }
             else
             {
                 Console.WriteLine("Invalid ID. Please enter a valid one.");
-                return FindGoal();
+                return FindGoal(message);
             }
         }
 
@@ -272,14 +281,31 @@ namespace FinanceManager.ConsoleApp
 
         public void AddFoundsToGoals()
         {
-            Console.Write("Enter amount to add to goals: ");
-            var amountInput = Console.ReadLine();
-            if (!decimal.TryParse(amountInput, out var amount) || amount <= 0)
+            ShowAddFoundsMenu();
+            var choice = Console.ReadLine();
+
+            switch (choice)
             {
-                Console.WriteLine("Invalid amount.");
-                return;
+                case "1":
+                    decimal amount = GetTransactionAmount();
+                    if (amount == 0) return;
+                    AddFoundsAutomatically(amount);
+                    break;
+
+                case "2":
+                    AddFoundsManually();
+                    break;
+
+                default:
+                    Console.WriteLine("Invalid choice.");
+                    return;
             }
 
+            SaveChanges();
+        }
+
+        public void AddFoundsAutomatically(decimal amount)
+        {
             var goals = _dbContext.Goals.Where(g => g.CurrentAmount < g.TargetAmount).ToList();
             AdjustPriorityBasedOnTime(goals);
             var prioritySum = PrioritySum(goals);
@@ -300,6 +326,35 @@ namespace FinanceManager.ConsoleApp
 
             SaveChanges();
             CheckSumOfTransactions(amount);
+        }
+
+        public void AddFoundsManually()
+        {
+            Goal? goal = FindGoal(FindGoalToManuallyAddFounds);
+
+            if (goal == null)
+            {
+                Console.WriteLine("Wrong ID. Returning to menu.");
+                return;
+            }
+
+            decimal amount = GetTransactionAmount();
+            if (amount == 0) return;
+            MakeTransaction(goal, amount);
+            goal.CurrentAmount += amount;
+        }
+
+        public static decimal GetTransactionAmount()
+        {
+            Console.Write("Enter amount to add: ");
+            var amountInput = Console.ReadLine();
+            if (decimal.TryParse(amountInput, out var amount) && amount > 0)
+            {
+                return amount;
+            }
+
+            Console.WriteLine("Invalid amount.");
+            return 0;
         }
 
         public static decimal PrioritySum(List<Goal> goals)
@@ -334,8 +389,9 @@ namespace FinanceManager.ConsoleApp
             if (transactions != amount)
             {
                 decimal diff = amount - transactions;
-                MakeTransaction(_dbContext.Goals.OrderByDescending(g => g.Priority).First(), diff, RoundAllocationDesc);
-                _dbContext.Goals.OrderByDescending(g => g.Priority).First().CurrentAmount += diff;
+                var bestGoal = _dbContext.Goals.OrderByDescending(g => g.Priority).First();
+                MakeTransaction(bestGoal, diff, RoundAllocationDesc);
+                bestGoal.CurrentAmount += diff;
                 Console.WriteLine($"Automatically allocated missed founds to the goals with the most priority. Assigned: {diff}PLN");
             }
             SaveChanges();
@@ -345,23 +401,25 @@ namespace FinanceManager.ConsoleApp
         {
             foreach (var goal in goals)
             {
+                goal.PriorityBoosted = 0;
                 if (goal.TargetDate != null)
                 {
                     TimeSpan timeDifference = goal.TargetDate.Value - DateTime.Now;
                     var daysRemaining = timeDifference.TotalDays;
-
-                    if (daysRemaining <= 62)
-                    {
-                        goal.PriorityBoosted = 1;
-
-                        Console.WriteLine($"Goal '{goal.Name}' target date is close. Automatically increased priority.");
-                    }
 
                     if (daysRemaining <= 31)
                     {
                         goal.PriorityBoosted = 2;
                         Console.WriteLine($"Goal '{goal.Name}' is nearing its target date. Automatically increased priority.");
                     }
+
+                    else if (daysRemaining <= 62)
+                    {
+                        goal.PriorityBoosted = 1;
+
+                        Console.WriteLine($"Goal '{goal.Name}' target date is close. Automatically increased priority.");
+                    }
+                    
                 }
             }
         }

@@ -340,6 +340,12 @@ namespace FinanceManager.ConsoleApp
 
             decimal amount = GetTransactionAmount();
             if (amount == 0) return;
+
+            (bool overflow, decimal overflowAmount) = OverflowCheck(goal, amount);
+            if (overflow == true)
+            {
+                MakeTransaction(goal, overflowAmount); //goal to be changed
+            }
             MakeTransaction(goal, amount);
             goal.CurrentAmount += amount;
         }
@@ -423,6 +429,24 @@ namespace FinanceManager.ConsoleApp
                 }
             }
         }
+
+        public static (bool, decimal) OverflowCheck(Goal goal, decimal amount)
+        {
+            if(goal.CurrentAmount + amount > goal.TargetAmount)
+            {
+                Console.WriteLine($"Warning: Adding {amount} to '{goal.Name}' will exceed the target amount of {goal.TargetAmount}.");
+                Console.Write("Do you want to assign the rest of founds to the other goals? (y/n): ");
+                var choice = Console.ReadLine();
+                if (choice != null && choice.ToLower() == "y")
+                {
+                    decimal allowableAmount = goal.TargetAmount - goal.CurrentAmount;
+                    Console.WriteLine($"Only {allowableAmount} will be added to '{goal.Name}'. The rest will be allocated to other goals.");
+                    return (true, (amount - allowableAmount));
+                }
+            }
+            return (false, 0);
+        }
+
     }
 
 }

@@ -282,6 +282,7 @@ namespace FinanceManager.ConsoleApp
         public void AddFoundsToGoals()
         {
             ShowAddFoundsMenu();
+            Console.Write("Select an option: ");
             var choice = Console.ReadLine();
 
             switch (choice)
@@ -294,6 +295,30 @@ namespace FinanceManager.ConsoleApp
 
                 case "2":
                     AddFoundsManually();
+                    break;
+
+                default:
+                    Console.WriteLine("Invalid choice.");
+                    return;
+            }
+
+            SaveChanges();
+        }
+
+        public void AddFoundsToGoals(decimal amount)
+        {
+            ShowAddFoundsMenu();
+            Console.Write("Select an option: ");
+            var choice = Console.ReadLine();
+
+            switch (choice)
+            {
+                case "1":
+                    AddFoundsAutomatically(amount);
+                    break;
+
+                case "2":
+                    AddFoundsManually(amount);
                     break;
 
                 default:
@@ -320,8 +345,8 @@ namespace FinanceManager.ConsoleApp
             foreach (var goal in goals)
             {
                 var amountToAdd = Math.Round(onePointValue * (int)goal.Priority, 2);
-                MakeTransaction(goal, amountToAdd);
-                goal.CurrentAmount += amountToAdd;
+
+                CheckOverflowAndHandle(goal, amountToAdd);
             }
 
             SaveChanges();
@@ -341,13 +366,20 @@ namespace FinanceManager.ConsoleApp
             decimal amount = GetTransactionAmount();
             if (amount == 0) return;
 
-            (bool overflow, decimal overflowAmount) = OverflowCheck(goal, amount);
-            if (overflow == true)
+            CheckOverflowAndHandle(goal, amount);
+        }
+
+        public void AddFoundsManually(decimal amount)
+        {
+            Goal? goal = FindGoal(FindGoalToManuallyAddFounds);
+
+            if (goal == null)
             {
-                MakeTransaction(goal, overflowAmount); //goal to be changed
+                Console.WriteLine("Wrong ID. Returning to menu."); 
+                return;
             }
-            MakeTransaction(goal, amount);
-            goal.CurrentAmount += amount;
+
+            CheckOverflowAndHandle(goal, amount);
         }
 
         public static decimal GetTransactionAmount()
@@ -430,6 +462,24 @@ namespace FinanceManager.ConsoleApp
             }
         }
 
+        public void CheckOverflowAndHandle(Goal goal, decimal amount)
+        {
+            (bool overflow, decimal overflowAmount) = OverflowCheck(goal, amount);
+            if (overflow)
+            {
+                decimal allowableAmount = amount - overflowAmount;
+                goal.CurrentAmount += allowableAmount;
+
+                OverflowHandler(goal, overflowAmount);
+                MakeTransaction(goal, allowableAmount);
+            }
+            else
+            {
+                MakeTransaction(goal, amount);
+                goal.CurrentAmount += amount;
+            }
+        }
+
         public static (bool, decimal) OverflowCheck(Goal goal, decimal amount)
         {
             if(goal.CurrentAmount + amount > goal.TargetAmount)
@@ -437,7 +487,7 @@ namespace FinanceManager.ConsoleApp
                 Console.WriteLine($"Warning: Adding {amount} to '{goal.Name}' will exceed the target amount of {goal.TargetAmount}.");
                 Console.Write("Do you want to assign the rest of founds to the other goals? (y/n): ");
                 var choice = Console.ReadLine();
-                if (choice != null && choice.ToLower() == "y")
+                if (choice != null && choice?.ToLower() == "y")
                 {
                     decimal allowableAmount = goal.TargetAmount - goal.CurrentAmount;
                     Console.WriteLine($"Only {allowableAmount} will be added to '{goal.Name}'. The rest will be allocated to other goals.");
@@ -445,6 +495,14 @@ namespace FinanceManager.ConsoleApp
                 }
             }
             return (false, 0);
+        }
+
+        public void OverflowHandler(Goal goal, decimal overflowAmount)
+        {
+            Console.WriteLine($"There is an overflow in {goal.Name} goal. If you want to assign the rest of the founds please pick from the list below (press enter to skip)");
+
+            AddFoundsToGoals(overflowAmount);
+            SaveChanges();
         }
 
     }

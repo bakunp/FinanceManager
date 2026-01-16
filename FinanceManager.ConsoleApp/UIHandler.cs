@@ -9,6 +9,7 @@ namespace FinanceManager.ConsoleApp
     internal class UIHandler(FinanceDbContext dbContext)
     {
         private readonly FinanceDbContext _dbContext = dbContext;
+        private readonly FinanceCalculator _calculator = new();
 
         const string AutoAllocationDesc = "Automatic fund allocation";
         const string RoundAllocationDesc = "Rounding correction";
@@ -37,8 +38,6 @@ namespace FinanceManager.ConsoleApp
         public void AddGoal()
         {
             var (name, amount, date, priority) = GetInputData();
-
-
             var goal = new Goal
             {
                 Name = name,
@@ -332,21 +331,22 @@ namespace FinanceManager.ConsoleApp
         public void AddFoundsAutomatically(decimal amount)
         {
             var goals = _dbContext.Goals.Where(g => g.CurrentAmount < g.TargetAmount).ToList();
-            AdjustPriorityBasedOnTime(goals);
-            var prioritySum = PrioritySum(goals);
 
-            if (prioritySum == 0)
+            _calculator.AdjustPriorityBasedOnTime(goals);
+            
+            var calculatedDistribution = _calculator.CalculateAutoDistribution(goals, amount);
+
+            if (calculatedDistribution.Count == 0)
             {
-                Console.WriteLine("No goals with priority found to allocate funds.");
+                Console.WriteLine("No goals available for fund allocation.");
                 return;
             }
 
-            var onePointValue = amount / prioritySum;
-            foreach (var goal in goals)
+            foreach (var entry in calculatedDistribution)
             {
-                var amountToAdd = Math.Round(onePointValue * (int)goal.Priority, 2);
-
-                CheckOverflowAndHandle(goal, amountToAdd);
+                var goal = entry.Key;
+                decimal value = entry.Value;
+                CheckOverflowAndHandle(goal, value);
             }
 
             SaveChanges();
@@ -355,18 +355,11 @@ namespace FinanceManager.ConsoleApp
 
         public void AddFoundsManually()
         {
-            Goal? goal = FindGoal(FindGoalToManuallyAddFounds);
-
-            if (goal == null)
-            {
-                Console.WriteLine("Wrong ID. Returning to menu.");
-                return;
-            }
-
+    
             decimal amount = GetTransactionAmount();
             if (amount == 0) return;
 
-            CheckOverflowAndHandle(goal, amount);
+            AddFoundsManually(amount);
         }
 
         public void AddFoundsManually(decimal amount)
@@ -375,7 +368,7 @@ namespace FinanceManager.ConsoleApp
 
             if (goal == null)
             {
-                Console.WriteLine("Wrong ID. Returning to menu."); 
+                Console.WriteLine("Wrong ID. Returning to menu.");
                 return;
             }
 
@@ -393,13 +386,6 @@ namespace FinanceManager.ConsoleApp
 
             Console.WriteLine("Invalid amount.");
             return 0;
-        }
-
-        public static decimal PrioritySum(List<Goal> goals)
-        {
-            var sum = goals.Where(g => g.Priority > 0).Sum(g => g.EffectivePriority);
-
-            return sum;
         }
 
         public void SaveChanges()
@@ -435,66 +421,37 @@ namespace FinanceManager.ConsoleApp
             SaveChanges();
         }
 
-        public static void AdjustPriorityBasedOnTime(List<Goal> goals)
-        {
-            foreach (var goal in goals)
-            {
-                goal.PriorityBoosted = 0;
-                if (goal.TargetDate != null)
-                {
-                    TimeSpan timeDifference = goal.TargetDate.Value - DateTime.Now;
-                    var daysRemaining = timeDifference.TotalDays;
-
-                    if (daysRemaining <= 31)
-                    {
-                        goal.PriorityBoosted = 2;
-                        Console.WriteLine($"Goal '{goal.Name}' is nearing its target date. Automatically increased priority.");
-                    }
-
-                    else if (daysRemaining <= 62)
-                    {
-                        goal.PriorityBoosted = 1;
-
-                        Console.WriteLine($"Goal '{goal.Name}' target date is close. Automatically increased priority.");
-                    }
-                    
-                }
-            }
-        }
-
         public void CheckOverflowAndHandle(Goal goal, decimal amount)
         {
-            (bool overflow, decimal overflowAmount) = OverflowCheck(goal, amount);
-            if (overflow)
-            {
-                decimal allowableAmount = amount - overflowAmount;
-                goal.CurrentAmount += allowableAmount;
+            (decimal allocatedAmount, decimal overflowAmount) = _calculator.OverflowCheck(goal, amount);
 
-                OverflowHandler(goal, overflowAmount);
-                MakeTransaction(goal, allowableAmount);
+            if (overflowAmount > 0)
+            {
+
+                Console.WriteLine($"Warning: Adding {amount} to '{goal.Name}' will exceed the target amount.");
+                Console.WriteLine($"Only {allocatedAmount} fits. Overflow: {overflowAmount}");
+                Console.Write("Do you want to assign the rest of founds to the other goals? (y/n): ");
+                var choice = Console.ReadLine();
+
+                if (choice?.ToLower() == "y")
+                {
+                    goal.CurrentAmount += allocatedAmount;
+                    MakeTransaction(goal, allocatedAmount);
+                    OverflowHandler(goal, overflowAmount);
+                }
+                else
+                {
+                    goal.CurrentAmount += allocatedAmount;
+                    MakeTransaction(goal, allocatedAmount);
+                }
             }
             else
             {
                 MakeTransaction(goal, amount);
                 goal.CurrentAmount += amount;
             }
-        }
 
-        public static (bool, decimal) OverflowCheck(Goal goal, decimal amount)
-        {
-            if(goal.CurrentAmount + amount > goal.TargetAmount)
-            {
-                Console.WriteLine($"Warning: Adding {amount} to '{goal.Name}' will exceed the target amount of {goal.TargetAmount}.");
-                Console.Write("Do you want to assign the rest of founds to the other goals? (y/n): ");
-                var choice = Console.ReadLine();
-                if (choice != null && choice?.ToLower() == "y")
-                {
-                    decimal allowableAmount = goal.TargetAmount - goal.CurrentAmount;
-                    Console.WriteLine($"Only {allowableAmount} will be added to '{goal.Name}'. The rest will be allocated to other goals.");
-                    return (true, (amount - allowableAmount));
-                }
-            }
-            return (false, 0);
+            SaveChanges();
         }
 
         public void OverflowHandler(Goal goal, decimal overflowAmount)
@@ -502,7 +459,6 @@ namespace FinanceManager.ConsoleApp
             Console.WriteLine($"There is an overflow in {goal.Name} goal. If you want to assign the rest of the founds please pick from the list below (press enter to skip)");
 
             AddFoundsToGoals(overflowAmount);
-            SaveChanges();
         }
 
     }

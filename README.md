@@ -1,7 +1,7 @@
 # Finance Manager
 
 ![C#](https://img.shields.io/badge/Language-C%23-blue)
-![.NET](https://img.shields.io/badge/.NET-8.0-purple)
+![.NET](https://img.shields.io/badge/.NET-10.0-purple)
 ![Status](https://img.shields.io/badge/Status-Active-brightgreen)
 ![Tests](https://img.shields.io/badge/Tests-Passing-success)
 ![Focus](https://img.shields.io/badge/Focus-Learning-orange)

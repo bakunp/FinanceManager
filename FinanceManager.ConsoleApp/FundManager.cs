@@ -7,11 +7,11 @@ using System.Text;
 
 namespace FinanceManager.ConsoleApp
 {
-    public class FundManager(FinanceDbContext fdc, GoalManager gm, InputReader ir, FinanceCalculator fc)
+    public class FundManager(FinanceDbContext fdc, IGoalManager gm, IInputReader ir, FinanceCalculator fc) : IFundManager
     {
         private readonly FinanceDbContext _dbContext = fdc;
-        private readonly GoalManager _goalManager = gm;
-        private readonly InputReader _inputReader = ir;
+        private readonly IGoalManager _goalManager = gm;
+        private readonly IInputReader _inputReader = ir;
         private readonly FinanceCalculator _financeCalculator = fc;
 
         public void AddFundsToGoals()

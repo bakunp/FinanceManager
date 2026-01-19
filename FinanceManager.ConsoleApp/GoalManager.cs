@@ -7,7 +7,7 @@ using System.Text;
 
 namespace FinanceManager.ConsoleApp
 {
-    public class GoalManager(FinanceDbContext db, InputReader ir)
+    public class GoalManager(FinanceDbContext db, InputReader ir) : IGoalManager
     {
         private readonly FinanceDbContext _dbContext = db;
         private readonly InputReader _inputReader = ir;

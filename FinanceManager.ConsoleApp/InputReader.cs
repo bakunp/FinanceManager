@@ -5,7 +5,7 @@ using System.Text;
 
 namespace FinanceManager.ConsoleApp
 {
-    public class InputReader
+    public class InputReader : IInputReader
     {
         public (string, decimal, DateTime?, Goal.GoalPriorityEnum) GetInputData()
         {

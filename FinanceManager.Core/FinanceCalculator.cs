@@ -4,7 +4,7 @@ using System.Text;
 
 namespace FinanceManager.Core
 {
-    public class FinanceCalculator
+    public class FinanceCalculator : IFinanceCalculator
     {
         public decimal CalculatePrioritySum(List<Goal> goals)
         {

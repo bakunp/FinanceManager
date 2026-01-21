@@ -7,18 +7,18 @@ using System.Text;
 
 namespace FinanceManager.ConsoleApp
 {
-    public class FundManager(FinanceDbContext fdc, IGoalManager gm, IInputReader ir, FinanceCalculator fc) : IFundManager
+    public class FundManager(FinanceDbContext fdc, IGoalManager gm, IInputReader ir, IFinanceCalculator fc) : IFundManager
     {
         private readonly FinanceDbContext _dbContext = fdc;
         private readonly IGoalManager _goalManager = gm;
         private readonly IInputReader _inputReader = ir;
-        private readonly FinanceCalculator _financeCalculator = fc;
+        private readonly IFinanceCalculator _financeCalculator = fc;
 
         public void AddFundsToGoals()
         {
             UIMessages.AddFundsMenu();
             Console.Write("Select an option: ");
-            var choice = Console.ReadLine();
+            var choice = _inputReader.Get1Or2OrSkipChoice();
 
             switch (choice)
             {
@@ -36,15 +36,13 @@ namespace FinanceManager.ConsoleApp
                     Console.WriteLine("Invalid choice.");
                     return;
             }
-
-            _dbContext.SaveChanges();
         }
 
         public void AddFundsToGoals(decimal amount)
         {
             UIMessages.AddFundsMenu();
             Console.Write("Select an option: ");
-            var choice = Console.ReadLine();
+            var choice = _inputReader.Get1Or2OrSkipChoice();
 
             switch (choice)
             {
@@ -60,8 +58,6 @@ namespace FinanceManager.ConsoleApp
                     Console.WriteLine("Invalid choice.");
                     return;
             }
-
-            _dbContext.SaveChanges();
         }
 
         public void AddFundsAutomatically(decimal amount)
@@ -85,8 +81,8 @@ namespace FinanceManager.ConsoleApp
                 CheckOverflowAndHandle(goal, value);
             }
 
+            //CheckSumOfTransactions(amount);
             _dbContext.SaveChanges();
-            CheckSumOfTransactions(amount);
         }
 
         public void AddFundsManually()
@@ -109,6 +105,7 @@ namespace FinanceManager.ConsoleApp
             }
 
             CheckOverflowAndHandle(goal, amount);
+            //CheckSumOfTransactions(amount);
             _dbContext.SaveChanges();
         }
 
@@ -144,30 +141,22 @@ namespace FinanceManager.ConsoleApp
         {
             (decimal allocatedAmount, decimal overflowAmount) = _financeCalculator.OverflowCheck(goal, amount);
 
+            goal.CurrentAmount += allocatedAmount;
+            MakeTransaction(goal, allocatedAmount);
+            _dbContext.SaveChanges();
+
             if (overflowAmount > 0)
             {
 
                 Console.WriteLine($"Warning: Adding {amount} to '{goal.Name}' will exceed the target amount.");
                 Console.WriteLine($"Only {allocatedAmount} fits. Overflow: {overflowAmount}");
                 Console.Write("Do you want to assign the rest of funds to the other goals? (y/n): ");
-                var choice = Console.ReadLine();
+                var choice = _inputReader.GetYesNoChoice();
 
-                if (choice?.ToLower() == "y")
+                if (choice == "y")
                 {
-                    goal.CurrentAmount += allocatedAmount;
-                    MakeTransaction(goal, allocatedAmount);
                     HandleOverflow(goal, overflowAmount);
                 }
-                else
-                {
-                    goal.CurrentAmount += allocatedAmount;
-                    MakeTransaction(goal, allocatedAmount);
-                }
-            }
-            else
-            {
-                MakeTransaction(goal, amount);
-                goal.CurrentAmount += amount;
             }
         }
 

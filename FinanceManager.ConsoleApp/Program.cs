@@ -11,7 +11,7 @@ var _inputReader = new InputReader();
 var _goalManager = new GoalManager(dbContext, _inputReader);
 var _fundManager = new FundManager(dbContext, _goalManager, _inputReader, _financeCalculator);
 
-dbContext.Database.EnsureCreated();
+if (!File.Exists("finance.db")) dbContext.Database.EnsureCreated();
 var ui = new UIHandler(_fundManager, _goalManager);
 
 ui.Run();

@@ -1,6 +1,7 @@
 ﻿using FinanceManager.Core;
 using System;
 using System.Collections.Generic;
+using System.Reflection.Metadata;
 using System.Text;
 
 namespace FinanceManager.ConsoleApp
@@ -168,6 +169,22 @@ namespace FinanceManager.ConsoleApp
 
             Console.WriteLine("Invalid amount.");
             return 0;
+        }
+
+        public string GetYesNoChoice()
+        {
+            var choice = Console.ReadLine();
+            return choice?.ToLower() == "y" ? "y" : "n";
+        }
+
+        public string? Get1Or2OrSkipChoice()
+        {
+            var choice = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(choice))
+            {
+                return "";
+            }
+            return choice == "1" || choice == "2" ? choice : null;
         }
     }
 }

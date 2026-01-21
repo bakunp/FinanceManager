@@ -50,13 +50,16 @@ namespace FinanceManager.Core
 
         public (decimal, decimal) OverflowCheck(Goal goal, decimal amount)
         {
-            var spaceLeft = goal.TargetAmount - goal.CurrentAmount;
+            if (goal.CurrentAmount >= goal.TargetAmount)
+            {
+                return (0, amount);
+            }
 
-            if (spaceLeft < 0) spaceLeft = 0;
+            var remainingSpace = goal.TargetAmount - goal.CurrentAmount;
+            var allocated = Math.Min(remainingSpace, amount);
+            var overflow = amount - allocated;
 
-            if (amount > spaceLeft) return (spaceLeft, amount - spaceLeft);
-
-            return (amount, 0);
+            return (allocated, overflow);
         }
     }
 }

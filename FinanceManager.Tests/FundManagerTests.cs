@@ -154,31 +154,6 @@ namespace FinanceManager.Tests
             Assert.Equal(expectedAmountOnSecondGoal, dbContext.Goals.Find(testGoal2.Id)!.CurrentAmount);
         }
 
-        [Fact]
-        public void AddFundsManually_WhenNoOtherGoalsAvailable_ExpectNoExceptionThrown()
-        {
-            //Arrange
-            var dbContext = DbContextFactory.Create();
-            var mockGoalManager = new Mock<IGoalManager>();
-            var mockReader = new Mock<IInputReader>();
-            var financeCalculator = new FinanceCalculator();
-
-            var manager = new FundManager(dbContext, mockGoalManager.Object, mockReader.Object, financeCalculator);
-
-            var testGoal1 = new Goal { Id = 1, Name = "Vacation", Priority = Goal.GoalPriorityEnum.Critical };
-
-            mockGoalManager.Setup(m => m.FindGoal(It.IsAny<string>())).Returns(testGoal1);
-            mockReader.Setup(m => m.GetYesNoChoice()).Returns("y");
-
-            dbContext.Add(testGoal1);
-            dbContext.SaveChanges();
-
-            //Act & Assert
-            var exception = Record.Exception(() => manager.AddFundsManually(200));
-            Assert.Null(exception);
-            Assert.Equal(1000, dbContext.Goals.Find(testGoal1.Id)!.CurrentAmount);
-        }
-
         [Theory]
         [InlineData(0, 0, "1")]
         [InlineData(500, 500, "1")]

@@ -2,10 +2,12 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace FinanceManager.Data
 {
+    [ExcludeFromCodeCoverage]
     public class FinanceDbContext : DbContext
     {
         public FinanceDbContext(DbContextOptions<FinanceDbContext> options) : base(options)

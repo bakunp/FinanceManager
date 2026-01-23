@@ -7,10 +7,10 @@ using System.Text;
 
 namespace FinanceManager.ConsoleApp
 {
-    public class GoalManager(FinanceDbContext db, InputReader ir) : IGoalManager
+    public class GoalManager(FinanceDbContext db, IInputReader ir) : IGoalManager
     {
         private readonly FinanceDbContext _dbContext = db;
-        private readonly InputReader _inputReader = ir;
+        private readonly IInputReader _inputReader = ir;
 
         public void AddGoal()
         {
@@ -31,6 +31,12 @@ namespace FinanceManager.ConsoleApp
         public void ShowGoals()
         {
             var goals = _dbContext.Goals.ToList();
+
+            if (goals.Count == 0)
+            {
+                Console.WriteLine("No goals found.");
+                return;
+            }
 
             foreach (var goal in goals)
             {

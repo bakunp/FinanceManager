@@ -9,5 +9,6 @@ namespace FinanceManager.ConsoleApp
         (string, decimal, DateTime?, Goal.GoalPriorityEnum) GetInputData(Goal goalToModify);
         decimal GetTransactionAmount();
         string GetYesNoChoice();
+        string? GetGoalID();
     }
 }

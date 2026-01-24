@@ -1,11 +1,13 @@
 ﻿using FinanceManager.Core;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection.Metadata;
 using System.Text;
 
 namespace FinanceManager.ConsoleApp
 {
+    [ExcludeFromCodeCoverage]
     public class InputReader : IInputReader
     {
         public (string, decimal, DateTime?, Goal.GoalPriorityEnum) GetInputData()
@@ -185,6 +187,12 @@ namespace FinanceManager.ConsoleApp
                 return "";
             }
             return choice == "1" || choice == "2" ? choice : null;
+        }
+
+        public string? GetGoalID()
+        {
+            var id = Console.ReadLine();
+            return id;
         }
     }
 }

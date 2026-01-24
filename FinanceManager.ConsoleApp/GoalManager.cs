@@ -64,7 +64,7 @@ namespace FinanceManager.ConsoleApp
         {
             Console.WriteLine($"{message}");
             ShowGoals();
-            var goalID = Console.ReadLine();
+            var goalID = _inputReader.GetGoalID();
 
             if (string.IsNullOrWhiteSpace(goalID))
             {

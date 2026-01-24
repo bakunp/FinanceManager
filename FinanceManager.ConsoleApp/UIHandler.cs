@@ -2,10 +2,12 @@
 using FinanceManager.Data;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace FinanceManager.ConsoleApp
 {
+    [ExcludeFromCodeCoverage]
     internal class UIHandler(FundManager fm, GoalManager gm)
     {
         private readonly FundManager _fundManager = fm;

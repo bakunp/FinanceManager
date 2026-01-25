@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FinanceManaager.Data\FinanceManager.Data.csproj" />
+    <ProjectReference Include="..\FinanceManager.Application\FinanceManager.Application.csproj" />
     <ProjectReference Include="..\FinanceManager.Core\FinanceManager.Core.csproj" />
   </ItemGroup>
 

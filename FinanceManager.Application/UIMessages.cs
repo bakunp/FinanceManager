@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
-namespace FinanceManager.ConsoleApp
+namespace FinanceManager.Application
 {
     [ExcludeFromCodeCoverage]
     public static class UIMessages
@@ -11,6 +11,7 @@ namespace FinanceManager.ConsoleApp
         public const string AutoAllocationDesc = "Automatic fund allocation";
         public const string RoundAllocationDesc = "Rounding correction";
         public const string FindGoalToModify = "Choose the goal to modify by choosing its ID (or press enter  to skip): ";
+        public const string FindGoalToRemove = "Enter ID of the goal to remove: (or press enter  to skip): ";
         public const string FindGoalToManuallyAddFunds = "Choose the goal to add funds to by choosing its ID (or press enter  to skip): ";
 
         public static void MainMenu()

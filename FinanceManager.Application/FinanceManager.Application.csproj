@@ -7,7 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.2" />
+    <ProjectReference Include="..\FinanceManaager.Data\FinanceManager.Data.csproj" />
+    <ProjectReference Include="..\FinanceManager.Core\FinanceManager.Core.csproj" />
   </ItemGroup>
 
 </Project>

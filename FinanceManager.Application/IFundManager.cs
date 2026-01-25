@@ -1,6 +1,6 @@
 ﻿using FinanceManager.Core;
 
-namespace FinanceManager.ConsoleApp
+namespace FinanceManager.Application
 {
     public interface IFundManager
     {

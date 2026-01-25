@@ -18,6 +18,7 @@ namespace FinanceManager.Data
         }
         public DbSet<Goal> Goals { get; set; }
         public DbSet<Transaction> Transactions { get; set; }
+        public DbSet<FixedExpense> FixedExpenses { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

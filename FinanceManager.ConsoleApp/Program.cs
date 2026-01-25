@@ -1,5 +1,6 @@
 ﻿using FinanceManager.ConsoleApp;
 using FinanceManager.Core;
+using FinanceManager.Application;
 using FinanceManager.Data;
 using System.Diagnostics.CodeAnalysis;
 
@@ -16,12 +17,12 @@ namespace FinanceManager.ConsoleApp
             var _financeCalculator = new FinanceCalculator();
             var _inputReader = new InputReader();
 
-            var _goalManager = new GoalManager(dbContext, _inputReader);
-            var _fundManager = new FundManager(dbContext, _goalManager, _inputReader, _financeCalculator);
+            var _goalManager = new GoalManager(dbContext);
+            var _fundManager = new FundManager(dbContext, _goalManager, _financeCalculator);
 
             if (!File.Exists("finance.db")) dbContext.Database.EnsureCreated();
 
-            var ui = new UIHandler(_fundManager, _goalManager);
+            var ui = new UIHandler(_fundManager, _goalManager, _inputReader);
 
             ui.Run();
         }

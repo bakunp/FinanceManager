@@ -1,5 +1,6 @@
 <Solution>
   <Project Path="FinanceManaager.Data/FinanceManager.Data.csproj" />
+  <Project Path="FinanceManager.API/FinanceManager.API.csproj" Id="14fe3dd2-7011-497b-95da-4b2c516343b4" />
   <Project Path="FinanceManager.Application/FinanceManager.Application.csproj" Id="e46d846a-35e7-4430-8a27-da7416287125" />
   <Project Path="FinanceManager.ConsoleApp/FinanceManager.ConsoleApp.csproj" />
   <Project Path="FinanceManager.Core/FinanceManager.Core.csproj" />

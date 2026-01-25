@@ -365,3 +365,4 @@ FodyWeavers.xsd
 /CoverageReport
 /coverage.txt
 /BenchmarkSuite1
+/FinanceManager.API/finance.db

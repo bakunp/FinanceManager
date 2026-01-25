@@ -4,14 +4,9 @@ namespace FinanceManager.Application
 {
     public interface IFundManager
     {
-        void AddFundsAutomatically(decimal amount);
-        void AddFundsManually();
-        void AddFundsManually(decimal amount);
-        void AddFundsToGoals();
-        void AddFundsToGoals(decimal amount);
-        void CheckOverflowAndHandle(Goal goal, decimal amount);
-        void CheckSumOfTransactions(decimal amount);
-        void HandleOverflow(Goal goal, decimal overflowAmount);
+        decimal AddFundsAutomatically(decimal amount);
+        void AddFundsManually(Goal goal, decimal amount);
+        decimal CheckOverflowAndHandle(Goal goal, decimal amount);
         void MakeTransaction(Goal goal, decimal amount, string description = "Automatic fund allocation");
     }
 }

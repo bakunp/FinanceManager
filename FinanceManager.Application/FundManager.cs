@@ -7,7 +7,7 @@ using System.Text;
 
 namespace FinanceManager.Application
 {
-    public class FundManager(FinanceDbContext fdc, IGoalManager gm, IFinanceCalculator fc)
+    public class FundManager(FinanceDbContext fdc, IGoalManager gm, IFinanceCalculator fc) : IFundManager
     {
         private readonly FinanceDbContext _dbContext = fdc;
         private readonly IGoalManager _goalManager = gm;

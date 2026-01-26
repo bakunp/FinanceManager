@@ -366,3 +366,5 @@ FodyWeavers.xsd
 /coverage.txt
 /BenchmarkSuite1
 /FinanceManager.API/finance.db
+/FinanceManager.API/finance.db-shm
+/FinanceManager.API/finance.db-wal

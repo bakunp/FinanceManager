@@ -30,6 +30,20 @@ namespace FinanceManager.API.Controllers
 
             return Ok("Goal added successfully!");
         }
+
+        [HttpDelete("{id}")]
+        public IActionResult DeleteGoal(int id)
+        {
+            _goalManager.RemoveSpecificGoal(id);
+            return NoContent();
+        }
+
+        [HttpDelete]
+        public IActionResult DeleteAll()
+        {
+            _goalManager.RemoveAllGoals();
+            return Ok("All goals deleted successfully!");
+        }
     }
     public class CreateGoalRequest
     {

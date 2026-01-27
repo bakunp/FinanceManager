@@ -1,10 +1,9 @@
-import { Box, Button, Modal, TextField, Typography, MenuItem, inputAdornmentClasses, FormControlLabel } from '@mui/material'; // Dodałem MenuItem dla wyboru priorytetu
+import { Box, Button, Modal, TextField, Typography, MenuItem, FormControlLabel, Checkbox } from '@mui/material'; 
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import * as React from 'react'
-import { addGoal } from '../services/goalService';
-import { Checkbox } from '@mui/material';
+import { addGoal, modifyGoal } from '../services/goalService';
 
 const style = {
     position: 'absolute',
@@ -22,41 +21,72 @@ const style = {
     outline: 'none'
 }
 
-export default function GoalModal({ onGoalAdded }) {
+export default function GoalModal({ onGoalAdded, goalToEdit, onClose }) {
     const [open, setOpen] = React.useState(false);
 
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
+    const handleOpen = () => {
+        setOpen(true);
+        resetForm();
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+        resetForm();
+        if (onClose) onClose(); 
+    };
     
     const [name, setName] = React.useState('');
     const [priority, setPriority] = React.useState(1);
     const [amount, setAmount] = React.useState('');
     const [date, setDate] = React.useState(dayjs());
     const [skipDate, setSkipDate] = React.useState(true);
+    
+    React.useEffect(() => {
+        if (goalToEdit) {
+            setName(goalToEdit.name);
+            setAmount(goalToEdit.targetAmount);
+            setPriority(goalToEdit.priority);
+            
+            if (goalToEdit.targetDate) {
+                setDate(dayjs(goalToEdit.targetDate));
+                setSkipDate(false);
+            } else {
+                setDate(dayjs());
+                setSkipDate(true);
+            }
+            setOpen(true);
+        } 
+    }, [goalToEdit]);
 
     const resetForm = () => {
         setName('');
         setAmount('');
         setDate(dayjs());
         setPriority(1);
+        setSkipDate(true);
     }
 
     const handleSave = async () => {
-        const goal = {
+        const goalData = {
             name: name,
             targetAmount: parseFloat(amount),
             targetDate: skipDate ? null : (date ? date.toISOString() : null),
             priority: parseInt(priority)
         }
 
-        const result = await addGoal(goal);
+        let result;
+
+        if (goalToEdit) {
+            result = await modifyGoal({ id: goalToEdit.id, ...goalData });
+        } else {
+            result = await addGoal(goalData);
+        }
         
         if(result) {
             if(onGoalAdded) onGoalAdded();
             handleClose();
-            resetForm();
         } else {
-            alert("Goal not added");
+            alert("Operation failed");
         }
     }
 
@@ -73,7 +103,7 @@ export default function GoalModal({ onGoalAdded }) {
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                     <Box sx={style}>
                         <Typography variant='h5' component='h2' align="center" fontWeight="bold" mb={1}>
-                           Add new goal
+                           {goalToEdit ? "Edit Goal" : "Add new Goal"}
                         </Typography>
                         <TextField
                             fullWidth
@@ -103,9 +133,12 @@ export default function GoalModal({ onGoalAdded }) {
                         <FormControlLabel
                             control={
                                 <Checkbox 
-                                    defaultChecked 
-                                    onChange={(e) => setSkipDate(e.target.checked)} />} 
-                            label="Goal without date"/>
+                                    checked={skipDate}
+                                    onChange={(e) => setSkipDate(e.target.checked)} 
+                                />
+                            } 
+                            label="Goal without date"
+                        />
 
                         <TextField
                             select
@@ -137,7 +170,7 @@ export default function GoalModal({ onGoalAdded }) {
                                 onClick={handleSave}
                                 disabled={!name || !amount}
                             >
-                                Save Goal
+                                {goalToEdit ? "Save Changes" : "Create Goal"}
                             </Button>
                         </Box>
                     </Box>

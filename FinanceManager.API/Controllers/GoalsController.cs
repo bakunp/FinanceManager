@@ -20,7 +20,6 @@ namespace FinanceManager.API.Controllers
         [HttpPost]
         public IActionResult Create([FromBody] CreateGoalRequest request)
         {
-            // Przekazujemy dane z JSON-a do Twojego Managera
             _goalManager.AddGoal(
                 request.Name,
                 request.TargetAmount,
@@ -44,9 +43,32 @@ namespace FinanceManager.API.Controllers
             _goalManager.RemoveAllGoals();
             return Ok("All goals deleted successfully!");
         }
+
+        [HttpPut]
+        public IActionResult Modify([FromBody] ModifyGoalRequest request)
+        {
+            _goalManager.ModifyGoal(
+                request.Id,
+                request.Name,
+                request.TargetAmount,
+                request.TargetDate,
+                request.Priority
+            );
+
+            return Ok("Goal edited successfully!");
+        }
     }
     public class CreateGoalRequest
     {
+        public string Name { get; set; } = string.Empty;
+        public decimal TargetAmount { get; set; }
+        public DateTime? TargetDate { get; set; }
+        public Goal.GoalPriorityEnum Priority { get; set; }
+    }
+
+    public class ModifyGoalRequest
+    {
+        public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public decimal TargetAmount { get; set; }
         public DateTime? TargetDate { get; set; }

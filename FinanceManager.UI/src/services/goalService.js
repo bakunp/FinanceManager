@@ -21,6 +21,26 @@ export const addGoal = async (goalData) => {
     }
 };
 
+export const modifyGoal = async (goalData) => {
+    try{
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers:{
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(goalData)
+        });
+        if(!response.ok){
+            throw new Error("Modify Goal Error.");
+        }
+
+        return true;
+    } catch (error){
+        console.error(error);
+        return false;
+    }
+};
+
 export const getAllGoals = async () => {
     try{
         const response = await fetch(url);

@@ -5,7 +5,7 @@ import {
     Radio, Paper, InputAdornment 
 } from '@mui/material';
 import SavingsIcon from '@mui/icons-material/Savings';
-import { addFundsAutomatically } from '../services/fundService';
+import { addFundsAutomatically, addFundsManually } from '../services/fundService';
 
 const style = {
     position: 'absolute',
@@ -61,7 +61,7 @@ export default function PaymentModal({ onPaymentCreated, allGoals }) {
         if(isAutomatic) {
             result = await addFundsAutomatically(paymentData.amount);
         } else {
-            // result = await addFunds
+            result = await addFundsManually(paymentData.goalId, paymentData.amount); 
         }
 
         if (onPaymentCreated) onPaymentCreated();

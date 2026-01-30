@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace FinanceManager.Core
 {
@@ -13,6 +14,7 @@ namespace FinanceManager.Core
         public DateTime Date { get; set; } = DateTime.Now;
         public string Description { get; set; } = string.Empty;
 
+        [JsonIgnore]
         public virtual Goal Goal { get; set; } = null!;
     }
 }

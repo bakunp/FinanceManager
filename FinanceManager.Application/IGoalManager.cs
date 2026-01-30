@@ -7,6 +7,7 @@ namespace FinanceManager.Application
         void AddGoal(string name, decimal amount, DateTime? date, Goal.GoalPriorityEnum priority);
         List<Goal> GetAllGoals();
         Goal? GetGoalById(int id);
+        List<Transaction> GetTransactionsForGoal(int goalId);
         void ModifyGoal(int id, string name, decimal amount, DateTime? date, Goal.GoalPriorityEnum priority);
         void RemoveAllGoals();
         void RemoveSpecificGoal(int id);

@@ -57,6 +57,14 @@ namespace FinanceManager.API.Controllers
 
             return Ok("Goal edited successfully!");
         }
+
+        [HttpGet("{id}/history")]
+        public IActionResult GetTransactions([FromBody] GetTransactionRequest request) 
+        {
+            var transactions = _goalManager.GetTransactionsForGoal(request.goalId);
+            
+            return Ok(transactions);
+        }
     }
     public class CreateGoalRequest
     {
@@ -73,5 +81,10 @@ namespace FinanceManager.API.Controllers
         public decimal TargetAmount { get; set; }
         public DateTime? TargetDate { get; set; }
         public Goal.GoalPriorityEnum Priority { get; set; }
+    }
+
+    public class GetTransactionRequest
+    {
+        public int goalId { get; set; }
     }
 }

@@ -70,5 +70,13 @@ namespace FinanceManager.Application
             _dbContext.Goals.RemoveRange(goals);
             _dbContext.SaveChanges();
         }
+
+        public List<Transaction> GetTransactionsForGoal(int goalId)
+        {
+            return _dbContext.Transactions
+                    .Where(t => t.GoalId == goalId)
+                    .OrderByDescending(t => t.Date)
+                    .ToList();
+        }
     }
 }

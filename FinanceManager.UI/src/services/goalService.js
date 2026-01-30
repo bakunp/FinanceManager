@@ -65,3 +65,19 @@ export const removeGoal = async (id) => {
         return false;
     }
 }
+
+export const getTransactionHistory = async (id) => {
+    try{
+        const response = await fetch(`${url}/${id}/history`, {
+            method: 'GET'
+        });
+        if(!response.ok)
+        {
+            throw new Error("Get transactions history failed.");
+        }
+        return await response.json();
+    } catch (error){
+        console.error(error);
+        return [];
+    }
+}

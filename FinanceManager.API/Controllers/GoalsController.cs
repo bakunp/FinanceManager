@@ -59,9 +59,9 @@ namespace FinanceManager.API.Controllers
         }
 
         [HttpGet("{id}/history")]
-        public IActionResult GetTransactions([FromBody] GetTransactionRequest request) 
+        public IActionResult GetTransactions(int id) 
         {
-            var transactions = _goalManager.GetTransactionsForGoal(request.goalId);
+            var transactions = _goalManager.GetTransactionsForGoal(id);
             
             return Ok(transactions);
         }

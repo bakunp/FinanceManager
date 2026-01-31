@@ -4,7 +4,7 @@ import { PRIORITY_COLORS, PRIORITY_MAP } from "../constants/goalConstants";
 import { removeGoal } from "../services/goalService";
 import { EditDocument } from "@mui/icons-material";
 
-export default function GoalCard({goal, onDelete, onEdit}){
+export default function GoalCard({goal, onDelete, onEdit, onOpen}){
 
     const isGoalAchieved = goal.currentAmount >= goal.targetAmount;
     const progressPercent = goal.targetAmount > 0 
@@ -14,7 +14,8 @@ export default function GoalCard({goal, onDelete, onEdit}){
         ? new Date(goal.targetDate).toLocaleDateString() 
         : 'No Date';
 
-    const handleDeleteClick = async () => {
+    const handleDeleteClick = async (e) => {
+        e.stopPropagation();
         if (window.confirm(`Are you sure to delete goal: "${goal.name}"?`)) {
             const success = await removeGoal(goal.id);
             if (success && onDelete) {
@@ -41,6 +42,7 @@ export default function GoalCard({goal, onDelete, onEdit}){
                     boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
                 }
             }}
+            onClick={() => onOpen(goal)}
         >
             <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>

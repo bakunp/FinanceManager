@@ -1,14 +1,14 @@
 
 const url = 'https://localhost:7021/api/Fund';
 
-export const addFundsAutomatically = async (amount) => {
+export const addFundsAutomatically = async (amount, description) => {
     try {
         const response = await fetch(url, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ amount: amount }) 
+            body: JSON.stringify({ amount: amount, description }) 
         });
 
         if (!response.ok) {
@@ -23,14 +23,14 @@ export const addFundsAutomatically = async (amount) => {
     }
 };
 
-export const addFundsManually = async (id, amount) => {
+export const addFundsManually = async (id, amount, description) => {
     try {
         const response = await fetch(`${url}/manual`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ goalID: id, amount: amount }) 
+            body: JSON.stringify({ goalID: id, amount: amount, description: description}) 
         });
 
         if (!response.ok) {

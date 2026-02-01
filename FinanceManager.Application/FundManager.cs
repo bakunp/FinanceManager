@@ -14,7 +14,7 @@ namespace FinanceManager.Application
         private readonly IFinanceCalculator _financeCalculator = fc;
 
 
-        public decimal AddFundsAutomatically(decimal amount, List<Goal> goalList = null)
+        public decimal AddFundsAutomatically(decimal amount, string description, List<Goal> goalList = null)
         {
             var goals = goalList;
             decimal totalOverflow = 0;
@@ -36,7 +36,7 @@ namespace FinanceManager.Application
                 (decimal assigned, decimal goalOverflow) = _financeCalculator.OverflowCheck(goal, value);
 
                 goal.CurrentAmount += assigned;
-                MakeTransaction(goal, assigned);
+                MakeTransaction(goal, assigned, description);
 
                 totalOverflow += goalOverflow;
             }
@@ -44,7 +44,7 @@ namespace FinanceManager.Application
             if (totalOverflow > 0)
             {
                 var goalsLeft = goals.Where(g => g.CurrentAmount < g.TargetAmount).ToList();
-                if (goalsLeft.Count > 0) totalOverflow = AddFundsAutomatically(totalOverflow, goalsLeft);
+                if (goalsLeft.Count > 0) totalOverflow = AddFundsAutomatically(totalOverflow, description, goalsLeft);
             }
 
             if (goalList == null) _dbContext.SaveChanges();
@@ -52,12 +52,12 @@ namespace FinanceManager.Application
         }
 
 
-        public decimal AddFundsManually(int goalId, decimal amount)
+        public decimal AddFundsManually(int goalId, decimal amount, string description)
         {
             var goal = _goalManager.GetGoalById(goalId) ?? throw new Exception("Goal not found");
-            var overflow = CheckOverflowAndHandle(goal, amount);
+            var overflow = CheckOverflowAndHandle(goal, amount, description);
 
-            if (overflow != 0) AddFundsAutomatically(overflow);
+            if (overflow != 0) AddFundsAutomatically(overflow, description);
 
             _dbContext.SaveChanges();
             return overflow;
@@ -75,12 +75,12 @@ namespace FinanceManager.Application
             _dbContext.Transactions.Add(transaction);
         }
 
-        public decimal CheckOverflowAndHandle(Goal goal, decimal amount)
+        public decimal CheckOverflowAndHandle(Goal goal, decimal amount, string description)
         {
             (decimal allocatedAmount, decimal overflowAmount) = _financeCalculator.OverflowCheck(goal, amount);
 
             goal.CurrentAmount += allocatedAmount;
-            MakeTransaction(goal, allocatedAmount);
+            MakeTransaction(goal, allocatedAmount, description);
 
             return overflowAmount;
         }

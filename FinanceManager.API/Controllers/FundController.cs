@@ -13,7 +13,8 @@ namespace FinanceManager.API.Controllers
         [HttpPut]
         public IActionResult AddFundsAutomatically([FromBody] AddFundsAutomaticallyRequest request)
         {
-            _fundManager.AddFundsAutomatically(request.Amount);
+
+            _fundManager.AddFundsAutomatically(request.Amount, request.Description);
 
             return Ok("Fund added automatically");
         }
@@ -21,7 +22,7 @@ namespace FinanceManager.API.Controllers
         [HttpPut("manual")]
         public IActionResult AddFundsManually([FromBody] AddFundsManuallyRequest request)
         {
-            _fundManager.AddFundsManually(request.GoalId, request.Amount);
+            _fundManager.AddFundsManually(request.GoalId, request.Amount, request.Description);
 
             return Ok("Fund added automatically");
         }
@@ -30,11 +31,13 @@ namespace FinanceManager.API.Controllers
     public class AddFundsAutomaticallyRequest
     {
         public decimal Amount { get; set; }
+        public string Description { get; set; } = string.Empty;
     }
 
     public class AddFundsManuallyRequest
     {
         public int GoalId { get; set; }
         public decimal Amount { get; set; }
+        public string Description { get; set; } = string.Empty;
     }
 }

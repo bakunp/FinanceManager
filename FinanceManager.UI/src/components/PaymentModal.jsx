@@ -2,7 +2,9 @@ import React, { useState } from 'react';
 import { 
     Box, Button, Modal, TextField, Typography, Switch, Stack, 
     List, ListItem, ListItemButton, ListItemText, ListItemIcon, 
-    Radio, Paper, InputAdornment 
+    Radio, Paper, InputAdornment, 
+    FormControlLabel,
+    Checkbox
 } from '@mui/material';
 import SavingsIcon from '@mui/icons-material/Savings';
 import { addFundsAutomatically, addFundsManually } from '../services/fundService';
@@ -26,11 +28,14 @@ const style = {
 export default function PaymentModal({ onPaymentCreated, allGoals }) {
     const [open, setOpen] = useState(false);
     const [amount, setAmount] = useState('');
+    const [description, setDescription] = React.useState('');
     const [isAutomatic, setIsAutomatic] = useState(false);
     const [selectedGoalId, setSelectedGoalId] = useState(null);
+    const [skipDescription, setSkipDescription] = React.useState(true);
 
     const resetForm = () => {
         setAmount('');
+        setDescription('Automatic fund allocation');
         setIsAutomatic(false);
         setSelectedGoalId(null);
     };
@@ -52,6 +57,7 @@ export default function PaymentModal({ onPaymentCreated, allGoals }) {
     const handleSave = async () => {
         const paymentData = {
             amount: parseFloat(amount),
+            description: description,
             type: isAutomatic ? 'Automatic' : 'Manual',
             goalId: selectedGoalId
         };
@@ -59,9 +65,9 @@ export default function PaymentModal({ onPaymentCreated, allGoals }) {
         let result;
 
         if(isAutomatic) {
-            result = await addFundsAutomatically(paymentData.amount);
+            result = await addFundsAutomatically(paymentData.amount, paymentData.description);
         } else {
-            result = await addFundsManually(paymentData.goalId, paymentData.amount); 
+            result = await addFundsManually(paymentData.goalId, paymentData.amount, paymentData.description); 
         }
 
         if (onPaymentCreated) onPaymentCreated();
@@ -106,6 +112,24 @@ export default function PaymentModal({ onPaymentCreated, allGoals }) {
                         InputProps={{
                             endAdornment: <InputAdornment position="end">PLN</InputAdornment>,
                         }}
+                    />
+                    <TextField
+                            disabled={skipDescription}
+                            required
+                            fullWidth
+                            label="Description"
+                            variant="outlined"
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                        />
+                    <FormControlLabel
+                        control={
+                            <Checkbox
+                                checked={skipDescription}
+                                onChange={(e) => setSkipDescription(e.target.checked)} 
+                            />
+                        } 
+                        label="Default description"
                     />
 
                     {!isAutomatic && (

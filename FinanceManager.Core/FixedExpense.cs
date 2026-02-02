@@ -20,7 +20,7 @@ namespace FinanceManager.Core
 
         public enum FrequencyUnit
         {
-            Day,
+            Day = 1,
             Week,
             Month,
             Year

@@ -16,6 +16,7 @@ namespace FinanceManager.ConsoleApp
             using var dbContext = new FinanceDbContext();
             var _financeCalculator = new FinanceCalculator();
             var _inputReader = new InputReader();
+            var _fixedExpenseManager = new FixedExpenseManager(dbContext);
 
             var _goalManager = new GoalManager(dbContext);
             var _fundManager = new FundManager(dbContext, _goalManager, _financeCalculator);

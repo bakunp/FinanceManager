@@ -13,6 +13,7 @@ builder.Services.AddDbContext<FinanceDbContext>();
 builder.Services.AddScoped<IGoalManager, GoalManager>();
 builder.Services.AddScoped<IFundManager, FundManager>();
 builder.Services.AddScoped<IFinanceCalculator, FinanceCalculator>();
+builder.Services.AddScoped<IFixedExpenseManager, FixedExpenseManager>();
 
 builder.Services.AddCors(options =>
 {

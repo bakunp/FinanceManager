@@ -4,8 +4,50 @@ import AddIcon from '@mui/icons-material/Add';
 import React from "react";
 
 export default function Expenses () {
+    const [rows, setRows] = React.useState(/** rows to be pulled from backend */);
     const [sum, setSum] = React.useState(15);
     const [amount, setAmount] = React.useState(15);
+
+    const paginationModel = { page: 0, pageSize: 5 };
+    const columns = [
+        { field: 'id', headerName: 'ID', width: 70 },
+        { field: 'name', headerName: 'Name', flex: 1, minWidth: 150 },
+        { 
+            field: 'category', 
+            headerName: 'Category', 
+            width: 150,
+            renderCell: (params) => (
+                <Chip label={params.value} size="small" variant="outlined" />
+            )
+        },
+        { field: 'date', headerName: 'Payment Date', width: 130 },
+        { 
+            field: 'amount', 
+            headerName: 'Amount', 
+            width: 130,
+            renderCell: (params) => (
+                <Typography fontWeight="bold" color="primary">
+                    {params.value} PLN
+                </Typography>
+            )
+        },
+        {
+            field: 'actions',
+            headerName: 'Actions',
+            width: 100,
+            sortable: false,
+            renderCell: (params) => (
+                <Box>
+                    <IconButton size="small" color="primary" onClick={() => console.log('Edit', params.id)}>
+                        <EditIcon fontSize="small" />
+                    </IconButton>
+                    <IconButton size="small" color="error" onClick={() => console.log('Delete', params.id)}>
+                        <DeleteIcon fontSize="small" />
+                    </IconButton>
+                </Box>
+            ),
+        },
+    ];
 
     return(
         <Box>

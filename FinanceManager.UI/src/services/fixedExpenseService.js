@@ -56,3 +56,15 @@ export const modifyFixedExpense = async (expenseData) => {
         return false;
     }
 }
+
+export const removeFixedExpense = async (id) => {
+    try{
+        const response = await fetch(`${url}/${id}`, {
+            method: 'DELETE'
+        });
+        return true;
+    } catch (error){
+        console.error(error);
+        return false;
+    }
+}

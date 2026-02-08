@@ -1,4 +1,4 @@
-import { Box, Button, Modal, TextField, Typography, MenuItem, FormControlLabel, Checkbox } from '@mui/material'; 
+import { Box, Modal, TextField, Typography, MenuItem, FormControlLabel, Checkbox, Button } from '@mui/material'; 
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
@@ -21,19 +21,7 @@ const style = {
     outline: 'none'
 }
 
-export default function GoalModal({ onGoalAdded, goalToEdit, onClose }) {
-    const [open, setOpen] = React.useState(false);
-
-    const handleOpen = () => {
-        setOpen(true);
-        resetForm();
-    };
-
-    const handleClose = () => {
-        setOpen(false);
-        resetForm();
-        if (onClose) onClose(); 
-    };
+export default function GoalModal({ open, onGoalAdded, goalToEdit, onClose }) {
     
     const [name, setName] = React.useState('');
     const [priority, setPriority] = React.useState(1);
@@ -41,23 +29,6 @@ export default function GoalModal({ onGoalAdded, goalToEdit, onClose }) {
     const [date, setDate] = React.useState(dayjs());
     const [skipDate, setSkipDate] = React.useState(true);
     
-    React.useEffect(() => {
-        if (goalToEdit) {
-            setName(goalToEdit.name);
-            setAmount(goalToEdit.targetAmount);
-            setPriority(goalToEdit.priority);
-            
-            if (goalToEdit.targetDate) {
-                setDate(dayjs(goalToEdit.targetDate));
-                setSkipDate(false);
-            } else {
-                setDate(dayjs());
-                setSkipDate(true);
-            }
-            setOpen(true);
-        } 
-    }, [goalToEdit]);
-
     const resetForm = () => {
         setName('');
         setAmount('');
@@ -65,6 +36,26 @@ export default function GoalModal({ onGoalAdded, goalToEdit, onClose }) {
         setPriority(1);
         setSkipDate(true);
     }
+
+    React.useEffect(() => {
+        if (open) {
+            if (goalToEdit) {
+                setName(goalToEdit.name);
+                setAmount(goalToEdit.targetAmount);
+                setPriority(goalToEdit.priority);
+                
+                if (goalToEdit.targetDate) {
+                    setDate(dayjs(goalToEdit.targetDate));
+                    setSkipDate(false);
+                } else {
+                    setDate(dayjs());
+                    setSkipDate(true);
+                }
+            } else {
+                resetForm();
+            }
+        }
+    }, [goalToEdit, open]);
 
     const handleSave = async () => {
         const goalData = {
@@ -84,98 +75,92 @@ export default function GoalModal({ onGoalAdded, goalToEdit, onClose }) {
         
         if(result) {
             if(onGoalAdded) onGoalAdded();
-            handleClose();
+            onClose();
         } else {
             alert("Operation failed");
         }
     }
 
     return (
-        <div>
-            <Button variant='contained' size="large" onClick={handleOpen}>
-                Add new Goal
-            </Button>
-            
-            <Modal
-                open={open}
-                onClose={handleClose}
-            >
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                    <Box sx={style}>
-                        <Typography variant='h5' component='h2' align="center" fontWeight="bold" mb={1}>
-                           {goalToEdit ? "Edit Goal" : "Add new Goal"}
-                        </Typography>
-                        <TextField
-                            fullWidth
-                            required
-                            label="Goal Name"
-                            variant="outlined"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                        />
-                        <TextField
-                            fullWidth
-                            required
-                            label="Target Amount (PLN)"
-                            type='number'
-                            value={amount}
-                            onChange={(e) => setAmount(e.target.value)}
-                        />
+        <Modal
+            open={open}
+            onClose={onClose}
+        >
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+                <Box sx={style}>
+                    <Typography variant='h5' component='h2' align="center" fontWeight="bold" mb={1}>
+                        {goalToEdit ? "Edit Goal" : "Add New Goal"}
+                    </Typography>
+                    <TextField
+                        fullWidth
+                        required
+                        label="Goal Name"
+                        variant="outlined"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                    />
+                    <TextField
+                        fullWidth
+                        required
+                        label="Target Amount (PLN)"
+                        type='number'
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                    />
 
-                        <DatePicker
-                            disabled={skipDate}
-                            label="Target Date"
-                            value={date}
-                            onChange={(newValue) => setDate(newValue)}
-                            slotProps={{ textField: { fullWidth: true } }} 
-                        />
+                    <DatePicker
+                        disabled={skipDate}
+                        label="Target Date"
+                        value={date}
+                        onChange={(newValue) => setDate(newValue)}
+                        slotProps={{ textField: { fullWidth: true } }} 
+                    />
 
-                        <FormControlLabel
-                            control={
-                                <Checkbox 
-                                    checked={skipDate}
-                                    onChange={(e) => setSkipDate(e.target.checked)} 
-                                />
-                            } 
-                            label="Goal without date"
-                        />
+                    <FormControlLabel
+                        control={
+                            <Checkbox 
+                                checked={skipDate}
+                                onChange={(e) => setSkipDate(e.target.checked)} 
+                            />
+                        } 
+                        label="Goal without date"
+                    />
 
-                        <TextField
-                            select
-                            fullWidth
-                            label="Priority"
-                            value={priority}
-                            onChange={(e) => setPriority(e.target.value)}
+                    <TextField
+                        select
+                        fullWidth
+                        label="Priority"
+                        value={priority}
+                        onChange={(e) => setPriority(e.target.value)}
+                    >
+                        <MenuItem value={1}>Low</MenuItem>
+                        <MenuItem value={2}>Medium</MenuItem>
+                        <MenuItem value={3}>High</MenuItem>
+                        <MenuItem value={5}>Important</MenuItem>
+                        <MenuItem value={7}>Critical</MenuItem>
+                    </TextField>
+
+                    <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
+                        <Button 
+                            fullWidth 
+                            variant="outlined" 
+                            color="error" 
+                            onClick={onClose}
                         >
-                            <MenuItem value={1}>Low</MenuItem>
-                            <MenuItem value={2}>Medium</MenuItem>
-                            <MenuItem value={3}>High</MenuItem>
-                            <MenuItem value={5}>Important</MenuItem>
-                            <MenuItem value={7}>Critical</MenuItem>
-                        </TextField>
-
-                        <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                            <Button 
-                                fullWidth 
-                                variant="outlined" 
-                                color="error" 
-                                onClick={handleClose}
-                            >
-                                Cancel
-                            </Button>
-                            <Button 
-                                fullWidth 
-                                variant='contained' 
-                                size="large" 
-                                onClick={handleSave}
-                                disabled={!name || !amount}
-                            >
-                                {goalToEdit ? "Save Changes" : "Create Goal"}
-                            </Button>
-                        </Box>
+                            Cancel
+                        </Button>
+                        <Button 
+                            fullWidth 
+                            variant='contained' 
+                            size="large" 
+                            onClick={handleSave}
+                            disabled={!name || !amount}
+                        >
+                            {goalToEdit ? "Save Changes" : "Create Goal"}
+                        </Button>
                     </Box>
-                </LocalizationProvider>
-            </Modal>
-        </div>
+                </Box>
+            </LocalizationProvider>
+        </Modal>
     )
 }

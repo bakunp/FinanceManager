@@ -1,12 +1,16 @@
-import { Box, Button, Paper, Table, Typography } from "@mui/material";
+import { Box, Button, Chip, IconButton, Paper, Typography } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
-import React from "react";
+import { useEffect, useState } from "react";
+import { getFixedExpenses } from "../services/fixedExpenseService";
+import { Delete, EditDocument } from "@mui/icons-material";
 
 export default function Expenses () {
-    const [rows, setRows] = React.useState(/** rows to be pulled from backend */);
-    const [sum, setSum] = React.useState(15);
-    const [amount, setAmount] = React.useState(15);
+    const [rows, setRows] = useState([]);
+    const [sum, setSum] = useState(15);
+    const [amount, setAmount] = useState(15);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     const paginationModel = { page: 0, pageSize: 5 };
     const columns = [
@@ -39,15 +43,33 @@ export default function Expenses () {
             renderCell: (params) => (
                 <Box>
                     <IconButton size="small" color="primary" onClick={() => console.log('Edit', params.id)}>
-                        <EditIcon fontSize="small" />
+                        <EditDocument fontSize="small" />
                     </IconButton>
                     <IconButton size="small" color="error" onClick={() => console.log('Delete', params.id)}>
-                        <DeleteIcon fontSize="small" />
+                        <Delete fontSize="small" />
                     </IconButton>
                 </Box>
             ),
         },
     ];
+
+    const fetchExpenses = () => {
+        setLoading(true);
+
+        getFixedExpenses()
+            .then(data => {
+                setRows(data);
+                setLoading(false);
+            })
+            .catch(err => {
+                setError(err.message);
+                setLoading(false)
+            });
+    };
+
+    useEffect(() => {
+        fetchExpenses();
+    }, []);
 
     return(
         <Box>

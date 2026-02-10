@@ -1,10 +1,11 @@
-import { Box, Card, CardContent, Chip, IconButton, LinearProgress, Stack, Tooltip, Typography } from "@mui/material";
+import { Box, Card, CardContent, Chip, IconButton, LinearProgress, Stack, Tooltip, Typography, useTheme } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import { PRIORITY_COLORS, PRIORITY_MAP } from "../constants/goalConstants";
 import { removeGoal } from "../services/goalService";
 import { EditDocument } from "@mui/icons-material";
 
 export default function GoalCard({goal, onDelete, onEdit, onOpen}){
+    const theme = useTheme();
 
     const isGoalAchieved = goal.currentAmount >= goal.targetAmount;
     const progressPercent = goal.targetAmount > 0 
@@ -32,14 +33,16 @@ export default function GoalCard({goal, onDelete, onEdit, onOpen}){
         <Card 
             sx={{ 
                 minWidth: 275, 
-                borderRadius: 4,
-                boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+                borderRadius: 5,
+                boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 4px 20px rgba(0,0,0,0.03)',
+                border: '1px solid',
+                borderColor: 'divider',
                 transition: '0.3s',
                 position: 'relative',
                 overflow: 'visible',
                 '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
+                    transform: 'translateY(-6px)',
+                    boxShadow: theme.palette.mode === 'dark' ? '0 10px 20px rgba(0, 0, 0, 0.2)' : '0 20px 40px rgba(0,0,0,0.08)',
                 }
             }}
             onClick={() => onOpen(goal)}
@@ -47,7 +50,7 @@ export default function GoalCard({goal, onDelete, onEdit, onOpen}){
             <CardContent sx={{ p: 3 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
                     <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                        <Typography variant="h6" sx={{ fontWeight: 800, lineHeight: 1.2, color: 'text.primary' }}>
                             {goal.name}
                         </Typography>
                         <Chip
@@ -74,8 +77,8 @@ export default function GoalCard({goal, onDelete, onEdit, onOpen}){
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                         Amount
                     </Typography>
-                    <Typography variant="h4" sx={{ fontWeight: 800, color: isGoalAchieved ? 'green' : '#333' }}>
-                        {goal.currentAmount} <span style={{ fontSize: '1rem', color: '#666', fontWeight: 400 }}>PLN</span>
+                    <Typography variant="h4" sx={{ fontWeight: 800, color: isGoalAchieved ? 'success.main' : 'text.primary', letterSpacing: '-0.03em' }}>
+                        {goal.currentAmount} <span style={{ fontSize: '1rem', color: theme.palette.text.secondary, fontWeight: 400 }}>PLN</span>
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
                         Goal amount: {goal.targetAmount} PLN
@@ -96,9 +99,9 @@ export default function GoalCard({goal, onDelete, onEdit, onOpen}){
                         value={progressPercent} 
                         color={barColor}
                         sx={{ 
-                            height: 10, 
+                            height: 12, 
                             borderRadius: 5,
-                            backgroundColor: '#f0f0f0',
+                            backgroundColor: theme.palette.action.hover,
                             '& .MuiLinearProgress-bar': {
                                 borderRadius: 5,
                             }
@@ -106,7 +109,7 @@ export default function GoalCard({goal, onDelete, onEdit, onOpen}){
                     />
                 </Box>
 
-                <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid #f0f0f0', display: 'flex', justifyContent: 'flex-end' }}>
+                <Box sx={{ mt: 2, pt: 2, borderTop: '1px solid', borderColor: 'divider', display: 'flex', justifyContent: 'flex-end' }}>
                      <Typography variant="caption" color="text.secondary" fontStyle="italic">
                         Deadline: <strong>{formattedDate}</strong>
                      </Typography>

@@ -1,8 +1,8 @@
-import { Box, Modal, TextField, Typography, MenuItem, FormControlLabel, Checkbox, Button } from '@mui/material'; 
+import { Box, Modal, TextField, Typography, MenuItem, FormControlLabel, Checkbox, Button, InputAdornment } from '@mui/material'; 
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
-import * as React from 'react'
+import { useState, useEffect } from 'react';
 import { addGoal, modifyGoal } from '../services/goalService';
 
 const style = {
@@ -23,11 +23,11 @@ const style = {
 
 export default function GoalModal({ open, onGoalAdded, goalToEdit, onClose }) {
     
-    const [name, setName] = React.useState('');
-    const [priority, setPriority] = React.useState(1);
-    const [amount, setAmount] = React.useState('');
-    const [date, setDate] = React.useState(dayjs());
-    const [skipDate, setSkipDate] = React.useState(true);
+    const [name, setName] = useState('');
+    const [priority, setPriority] = useState(1);
+    const [amount, setAmount] = useState('');
+    const [date, setDate] = useState(dayjs());
+    const [skipDate, setSkipDate] = useState(true);
     
     const resetForm = () => {
         setName('');
@@ -37,7 +37,7 @@ export default function GoalModal({ open, onGoalAdded, goalToEdit, onClose }) {
         setSkipDate(true);
     }
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (open) {
             if (goalToEdit) {
                 setName(goalToEdit.name);
@@ -102,10 +102,13 @@ export default function GoalModal({ open, onGoalAdded, goalToEdit, onClose }) {
                     <TextField
                         fullWidth
                         required
-                        label="Target Amount (PLN)"
+                        label="Target Amount"
                         type='number'
                         value={amount}
                         onChange={(e) => setAmount(e.target.value)}
+                        InputProps={{
+                            endAdornment: <InputAdornment position="end">PLN</InputAdornment>,
+                        }}
                     />
 
                     <DatePicker

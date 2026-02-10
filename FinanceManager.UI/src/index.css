@@ -1,9 +1,11 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: #F8FAFC;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  color: #1E293B;
+  background-color: #f8fafc;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 #root {

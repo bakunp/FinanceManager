@@ -117,7 +117,12 @@ export default function PaymentModal({ open, onClose, onPaymentCreated, allGoals
                     control={
                         <Checkbox
                             checked={skipDescription}
-                            onChange={(e) => setSkipDescription(e.target.checked)} 
+                            onChange={(e) => {
+                                setSkipDescription(e.target.checked);
+                                if (e.target.checked) {
+                                    setDescription('Automatic fund allocation');
+                                }
+                            }} 
                         />
                     } 
                     label="Default description"

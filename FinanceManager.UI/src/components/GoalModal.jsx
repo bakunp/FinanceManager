@@ -67,17 +67,22 @@ export default function GoalModal({ open, onGoalAdded, goalToEdit, onClose }) {
 
         let result;
 
-        if (goalToEdit) {
-            result = await modifyGoal({ id: goalToEdit.id, ...goalData });
-        } else {
-            result = await addGoal(goalData);
-        }
-        
-        if(result) {
-            if(onGoalAdded) onGoalAdded();
-            onClose();
-        } else {
-            alert("Operation failed");
+        try {
+            if (goalToEdit) {
+                result = await modifyGoal({ id: goalToEdit.id, ...goalData });
+            } else {
+                result = await addGoal(goalData);
+            }
+            
+            if(result) {
+                if(onGoalAdded) onGoalAdded();
+                onClose();
+            } else {
+                alert("Operation failed");
+            }
+        } catch (error) {
+            console.error(error);
+            alert("An error occurred while saving the goal.");
         }
     }
 

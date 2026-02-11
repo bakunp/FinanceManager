@@ -94,7 +94,7 @@ export default function Layout() {
                 component="main" 
                 sx={{ 
                     flexGrow: 1, 
-                    bgcolor: 'background.default', 
+                    bgcolor: theme.palette.mode === 'dark' ? '#18181b' : 'background.default',
                     minHeight: '100vh',
                     display: 'flex',
                     flexDirection: 'column'
@@ -104,7 +104,7 @@ export default function Layout() {
                     position="sticky" 
                     elevation={0}
                     sx={{ 
-                        bgcolor: theme.palette.mode === 'dark' ? 'rgba(2, 6, 23, 0.8)' : 'rgba(241, 245, 249, 0.8)',
+                        bgcolor: theme.palette.mode === 'dark' ? 'rgba(30, 30, 30, 0.8)' : 'rgba(255, 255, 255, 0.8)',
                         backdropFilter: 'blur(8px)',
                         borderBottom: '1px solid',
                         borderColor: 'divider',

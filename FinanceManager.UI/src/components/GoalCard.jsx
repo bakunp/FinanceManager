@@ -62,7 +62,7 @@ export default function GoalCard({goal, onDelete, onEdit, onOpen}){
                     </Box>
                     <Stack direction="row" spacing={0}>
                         <Tooltip title="Edit the goal">
-                            <IconButton onClick={() => onEdit(goal)} size="small" color="primary">
+                            <IconButton onClick={(e) => { e.stopPropagation(); onEdit(goal); }} size="small" color="primary">
                                 <EditDocument fontSize="small" />
                             </IconButton>
                         </Tooltip>

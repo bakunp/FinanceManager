@@ -28,7 +28,7 @@ export default function GoalDetailedInfoModal({ openedGoal, onClose }) {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        if (openedGoal) {
+        if (openedGoal?.id) {
             setLoading(true);
             getTransactionHistory(openedGoal.id)
                 .then(data => {
@@ -40,7 +40,7 @@ export default function GoalDetailedInfoModal({ openedGoal, onClose }) {
                     setLoading(false);
                 });
         }
-    }, [openedGoal]);
+    }, [openedGoal?.id]);
 
     if (!openedGoal) return null;
 
@@ -64,7 +64,14 @@ export default function GoalDetailedInfoModal({ openedGoal, onClose }) {
                     </IconButton>
                 </Box>
 
-                <Box sx={{ mb: 3, p: 2, bgcolor: '#f5f5f5', borderRadius: 2, display: 'flex', justifyContent: 'space-around' }}>
+                <Box sx={(theme) => ({ 
+                    mb: 3, 
+                    p: 2, 
+                    bgcolor: theme.palette.mode === 'dark' ? 'action.hover' : '#f5f5f5', 
+                    borderRadius: 2, 
+                    display: 'flex', 
+                    justifyContent: 'space-around' 
+                })}>
                     <Box textAlign="center">
                         <Typography variant="caption" color="text.secondary">Current amount</Typography>
                         <Typography variant="h6" color="success.main" fontWeight="bold">

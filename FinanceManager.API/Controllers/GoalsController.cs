@@ -1,10 +1,13 @@
 ﻿using FinanceManager.Application;
 using FinanceManager.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace FinanceManager.API.Controllers
 {
+    [Authorize]
     [Route("api/[controller]")]
     [ApiController]
     public class GoalsController(IGoalManager goalManager) : ControllerBase
@@ -13,7 +16,10 @@ namespace FinanceManager.API.Controllers
         [HttpGet]
         public IActionResult GetAllGoals()
         {
-            var goals = _goalManager.GetAllGoals();
+            var userID = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userID)) return Unauthorized();
+
+            var goals = _goalManager.GetAllGoals().Where(g => g.UserId == userID);
             return Ok(goals);
         }
 

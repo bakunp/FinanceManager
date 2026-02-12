@@ -1,6 +1,8 @@
-using FinanceManager.Data;
-using FinanceManager.Core;
 using FinanceManager.Application;
+using FinanceManager.Core;
+using FinanceManager.Data;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +28,19 @@ builder.Services.AddCors(options =>
         });
 });
 builder.Services.AddControllers();
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+})
+.AddCookie()
+.AddGoogle(googleOptions =>
+{
+    googleOptions.ClientId = "921612470048";
+    googleOptions.ClientSecret = "maent8s7sd71jo1gbpa7b7oeorgq5v6q.apps.googleusercontent.com";
+    googleOptions.CallbackPath = "/signin-google";
+});
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

@@ -9,6 +9,7 @@ namespace FinanceManager.Core
     {
 
         public int Id { get; set; }
+        public string UserId { get; set; } = string.Empty;
         public int GoalId { get; set; }
         public decimal Amount { get; set; }
         public DateTime Date { get; set; } = DateTime.Now;

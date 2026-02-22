@@ -1,40 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
 using Moq;
 using FinanceManager.Core;
-using Xunit;
-using FinanceManager.ConsoleApp;
+using FinanceManager.Application;
 using FinanceManager.Tests.Helpers;
+using Xunit;
 
 namespace FinanceManager.Tests
 {
     public class FundManagerTests
     {
-        [Fact]
-        public void AddFundsManually_WhenAmountIsZero_ExpectStopAndNotCallDatabase()
-        {
-            // Arrange
-            var dbContext = DbContextFactory.Create();
-            var testGoal = new Goal { Name = "Vacation", TargetAmount = 1000, CurrentAmount = 0 };
-            dbContext.Add(testGoal);
-            dbContext.SaveChanges();
-
-            var mockReader = new Mock<IInputReader>();
-            mockReader.Setup(m => m.GetTransactionAmount()).Returns(0);
-
-            var mockGoalManager = new Mock<IGoalManager>();
-
-            var manager = new FundManager(dbContext, mockGoalManager.Object, mockReader.Object, new FinanceCalculator());
-
-            // Act
-            manager.AddFundsManually();
-
-            // Assert
-            mockReader.Verify(m => m.GetTransactionAmount(), Times.Once);
-            mockGoalManager.Verify(m => m.FindGoal(It.IsAny<string>()), Times.Never);
-        }
-
         [Theory]
         [InlineData(1)]
         [InlineData(100)]
@@ -43,164 +18,169 @@ namespace FinanceManager.Tests
         {
             // Arrange
             var dbContext = DbContextFactory.Create();
-            var testGoal = new Goal { Id = 1, Name = "Vacation", TargetAmount = 1000, CurrentAmount = 0 };
-            dbContext.Add(testGoal);
+            var testGoal = new Goal { Id = 1, Name = "Vacation", TargetAmount = 1000, CurrentAmount = 0, UserId = "user1" };
+            dbContext.Goals.Add(testGoal);
             dbContext.SaveChanges();
 
-            var mockReader = new Mock<IInputReader>();
-            mockReader.Setup(m => m.GetTransactionAmount()).Returns(amount);
-
             var mockGoalManager = new Mock<IGoalManager>();
-            mockGoalManager.Setup(m => m.FindGoal(It.IsAny<string>())).Returns(testGoal);
+            mockGoalManager.Setup(m => m.GetGoalById(testGoal.Id)).Returns(testGoal);
 
-            var manager = new FundManager(dbContext, mockGoalManager.Object, mockReader.Object, new FinanceCalculator());
+            var financeCalculator = new FinanceCalculator();
+            var manager = new FundManager(dbContext, mockGoalManager.Object, financeCalculator);
 
             // Act
-            manager.AddFundsManually();
+            manager.AddFundsManually(testGoal.Id, amount, "Manual deposit");
 
             // Assert
-            mockReader.Verify(m => m.GetTransactionAmount(), Times.Once);
-            mockGoalManager.Verify(m => m.FindGoal(It.IsAny<string>()), Times.Once);
+            mockGoalManager.Verify(m => m.GetGoalById(testGoal.Id), Times.Once);
             Assert.Equal(amount, dbContext.Goals.Find(testGoal.Id)!.CurrentAmount);
         }
 
         [Fact]
-        public void AddFundsManually_WhenGoalNotFound_ExpectReturn()
+        public void AddFundsManually_WhenGoalNotFound_ExpectException()
         {
-            //Arrange
+            // Arrange
             var dbContext = DbContextFactory.Create();
             var mockGoalManager = new Mock<IGoalManager>();
-            var mockReader = new Mock<IInputReader>();
             var mockFinanceCalculator = new Mock<IFinanceCalculator>();
-            var manager = new FundManager(dbContext, mockGoalManager.Object, mockReader.Object, mockFinanceCalculator.Object);
+            var manager = new FundManager(dbContext, mockGoalManager.Object, mockFinanceCalculator.Object);
 
-            mockGoalManager.Setup(m => m.FindGoal(It.IsAny<string>())).Returns((Goal?)null);
-            mockReader.Setup(m => m.GetTransactionAmount()).Returns(100);
+            mockGoalManager.Setup(m => m.GetGoalById(It.IsAny<int>())).Returns((Goal?)null);
 
-            //Act
-            manager.AddFundsManually();
-
-            //Assert
-            mockFinanceCalculator.Verify(m => m.OverflowCheck(It.IsAny<Goal>(), It.IsAny<decimal>()), Times.Never);
+            // Act & Assert
+            Assert.Throws<Exception>(() => manager.AddFundsManually(999, 100, "Test"));
         }
 
         [Theory]
         [InlineData(1000, 0, 1100, 1000)]
         [InlineData(100, 100, 100, 100)]
-        public void AddFundsManually_WhenAmountIsOverflowingTarget_ExpectTargetFulfilledAndNotProceedWithReassigningTheFunds(decimal targetAmount, decimal currentAmount, decimal payment, decimal expectedAmount)
+        public void AddFundsManually_WhenAmountIsOverflowingTarget_ExpectTargetCapped(decimal targetAmount, decimal currentAmount, decimal payment, decimal expectedAmount)
         {
-            //Arrange
+            // Arrange
             var dbContext = DbContextFactory.Create();
             var mockGoalManager = new Mock<IGoalManager>();
-            var mockReader = new Mock<IInputReader>();
+
             var financeCalculator = new FinanceCalculator();
+            var manager = new FundManager(dbContext, mockGoalManager.Object, financeCalculator);
 
-            var manager = new FundManager(dbContext, mockGoalManager.Object, mockReader.Object, financeCalculator);
+            var testGoal = new Goal { Id = 1, Name = "Vacation", TargetAmount = targetAmount, CurrentAmount = currentAmount, Priority = Goal.GoalPriorityEnum.Critical, UserId = "user1" };
 
-            var testGoal1 = new Goal { Id = 1, Name = "Vacation", TargetAmount = targetAmount, CurrentAmount = currentAmount, Priority = Goal.GoalPriorityEnum.Critical };
-            var testGoal2 = new Goal { Id = 2, Name = "Medicines", TargetAmount = 100000, CurrentAmount = 0, Priority = Goal.GoalPriorityEnum.Critical };
+            mockGoalManager.Setup(m => m.GetGoalById(testGoal.Id)).Returns(testGoal);
 
-            mockGoalManager.Setup(m => m.FindGoal(It.IsAny<string>())).Returns(testGoal1);
-            mockReader.Setup(m => m.GetYesNoChoice()).Returns("n");
-
-            dbContext.Add(testGoal1);
-            dbContext.Add(testGoal2);
-
-            //Act
-            manager.AddFundsManually(payment);
-
-            //Assert
-            mockReader.Verify(m => m.GetYesNoChoice(), Times.Once);
-            Assert.Equal(expectedAmount, dbContext.Goals.Find(testGoal1.Id)!.CurrentAmount);
-            Assert.Equal(0, dbContext.Goals.Find(testGoal2.Id)!.CurrentAmount);
-        }
-
-        [Theory]
-        [InlineData(1000, 0, 1100, 1000, 100, "1")]
-        [InlineData(1000, 0, 1100, 1000, 100, "2")]
-        [InlineData(1000, 0, 1100, 1000, 0, "")]
-        [InlineData(100, 100, 100, 100, 100, "1")]
-        [InlineData(100, 100, 100, 100, 100, "2")]
-        [InlineData(100, 100, 100, 100, 0, "")]
-        public void AddFundsManually_WhenAmountIsOverflowingTarget_ExpectTargetFulfilledAndProceedWithReassigningTheFunds(decimal targetAmount, decimal currentAmount, decimal payment, decimal expectedAmountOnFirstGoal, decimal expectedAmountOnSecondGoal, string choice)
-        {
-            //Arrange
-            var dbContext = DbContextFactory.Create();
-            var mockGoalManager = new Mock<IGoalManager>();
-            var mockReader = new Mock<IInputReader>();
-            var financeCalculator = new FinanceCalculator();
-
-            var manager = new FundManager(dbContext, mockGoalManager.Object, mockReader.Object, financeCalculator);
-
-            var testGoal1 = new Goal { Id = 1, Name = "Vacation", TargetAmount = targetAmount, CurrentAmount = currentAmount, Priority = Goal.GoalPriorityEnum.Critical };
-            var testGoal2 = new Goal { Id = 2, Name = "Medicines", TargetAmount = 1000000, CurrentAmount = 0, Priority = Goal.GoalPriorityEnum.Critical };
-
-            mockGoalManager.SetupSequence(m => m.FindGoal(It.IsAny<string>()))
-                .Returns(testGoal1)
-                .Returns(testGoal2);
-            mockReader.Setup(m => m.GetYesNoChoice()).Returns("y");
-            mockReader.Setup(m => m.Get1Or2OrSkipChoice()).Returns(choice);
-
-            dbContext.Add(testGoal1);
-            dbContext.Add(testGoal2);
+            dbContext.Goals.Add(testGoal);
             dbContext.SaveChanges();
 
-            //Act
-            manager.AddFundsManually(payment);
+            // Act
+            manager.AddFundsManually(testGoal.Id, payment, "Overflow test");
 
-            //Assert
-            mockReader.Verify(m => m.GetYesNoChoice(), Times.Once);
-            Assert.Equal(expectedAmountOnFirstGoal, dbContext.Goals.Find(testGoal1.Id)!.CurrentAmount);
-            Assert.Equal(expectedAmountOnSecondGoal, dbContext.Goals.Find(testGoal2.Id)!.CurrentAmount);
-        }
-
-        [Theory]
-        [InlineData(0, 0, "1")]
-        [InlineData(500, 500, "1")]
-        [InlineData(500, 500, "2")]
-        [InlineData(500, 0, "")]
-        public void AddFundsToGoals_WithEveryParameter_ExpectFundsAdded(decimal transactionAmount, decimal expectedAmount, string choice)
-        {
-            //Arrange
-            var dbContext = DbContextFactory.Create();
-            var mockGoalManager = new Mock<IGoalManager>();
-            var mockReader = new Mock<IInputReader>();
-            var financeCalculator = new FinanceCalculator();
-
-            var manager = new FundManager(dbContext, mockGoalManager.Object, mockReader.Object, financeCalculator);
-
-            var testGoal1 = new Goal { Id = 1, Name = "Vacation", TargetAmount = 1000, CurrentAmount = 0, Priority = Goal.GoalPriorityEnum.Critical };
-
-            dbContext.Add(testGoal1);
-            dbContext.SaveChanges();
-
-            mockGoalManager.Setup(m => m.FindGoal(It.IsAny<string>())).Returns(testGoal1);
-            mockReader.Setup(m => m.GetTransactionAmount()).Returns(transactionAmount);
-            mockReader.Setup(m => m.Get1Or2OrSkipChoice()).Returns(choice);
-
-            //Act
-            manager.AddFundsToGoals();
-
-            //Assert
-            mockReader.Verify(m => m.Get1Or2OrSkipChoice(), Times.Once);
-            Assert.Equal(expectedAmount, dbContext.Goals.Find(testGoal1.Id)!.CurrentAmount);
+            // Assert
+            Assert.Equal(expectedAmount, dbContext.Goals.Find(testGoal.Id)!.CurrentAmount);
         }
 
         [Fact]
         public void AddFundsAutomatically_WhenNoGoalExists_ExpectNoExceptionThrown()
         {
-            //Arrange
-            //Arrange
+            // Arrange
             var dbContext = DbContextFactory.Create();
             var mockGoalManager = new Mock<IGoalManager>();
-            var mockReader = new Mock<IInputReader>();
             var financeCalculator = new FinanceCalculator();
 
-            var manager = new FundManager(dbContext, mockGoalManager.Object, mockReader.Object, financeCalculator);
+            var manager = new FundManager(dbContext, mockGoalManager.Object, financeCalculator);
 
-            //Act & Assert
-            var exception = Record.Exception(() => manager.AddFundsAutomatically(500));
+            // Act & Assert
+            var exception = Record.Exception(() => manager.AddFundsAutomatically("user1", 500, "Auto deposit"));
             Assert.Null(exception);
+        }
+
+        [Fact]
+        public void AddFundsAutomatically_WhenGoalsExist_ExpectFundsDistributed()
+        {
+            // Arrange
+            var dbContext = DbContextFactory.Create();
+            var mockGoalManager = new Mock<IGoalManager>();
+            var financeCalculator = new FinanceCalculator();
+
+            var manager = new FundManager(dbContext, mockGoalManager.Object, financeCalculator);
+
+            var testGoal = new Goal { Id = 1, Name = "Vacation", TargetAmount = 1000, CurrentAmount = 0, Priority = Goal.GoalPriorityEnum.Critical, UserId = "user1" };
+            dbContext.Goals.Add(testGoal);
+            dbContext.SaveChanges();
+
+            // Act
+            var overflow = manager.AddFundsAutomatically("user1", 500, "Auto deposit");
+
+            // Assert
+            Assert.Equal(500, dbContext.Goals.Find(testGoal.Id)!.CurrentAmount);
+            Assert.Equal(0, overflow);
+        }
+
+        [Fact]
+        public void CheckOverflowAndHandle_WhenNoOverflow_ExpectFullAmountAdded()
+        {
+            // Arrange
+            var dbContext = DbContextFactory.Create();
+            var mockGoalManager = new Mock<IGoalManager>();
+            var financeCalculator = new FinanceCalculator();
+
+            var manager = new FundManager(dbContext, mockGoalManager.Object, financeCalculator);
+
+            var goal = new Goal { Id = 1, Name = "Vacation", TargetAmount = 1000, CurrentAmount = 0, UserId = "user1" };
+            dbContext.Goals.Add(goal);
+            dbContext.SaveChanges();
+
+            // Act
+            var overflow = manager.CheckOverflowAndHandle(goal, 500, "Test");
+
+            // Assert
+            Assert.Equal(0, overflow);
+            Assert.Equal(500, goal.CurrentAmount);
+        }
+
+        [Fact]
+        public void CheckOverflowAndHandle_WhenOverflow_ExpectOverflowReturned()
+        {
+            // Arrange
+            var dbContext = DbContextFactory.Create();
+            var mockGoalManager = new Mock<IGoalManager>();
+            var financeCalculator = new FinanceCalculator();
+
+            var manager = new FundManager(dbContext, mockGoalManager.Object, financeCalculator);
+
+            var goal = new Goal { Id = 1, Name = "Vacation", TargetAmount = 1000, CurrentAmount = 900, UserId = "user1" };
+            dbContext.Goals.Add(goal);
+            dbContext.SaveChanges();
+
+            // Act
+            var overflow = manager.CheckOverflowAndHandle(goal, 200, "Test");
+
+            // Assert
+            Assert.Equal(100, overflow);
+            Assert.Equal(1000, goal.CurrentAmount);
+        }
+
+        [Fact]
+        public void MakeTransaction_ExpectTransactionAdded()
+        {
+            // Arrange
+            var dbContext = DbContextFactory.Create();
+            var mockGoalManager = new Mock<IGoalManager>();
+            var financeCalculator = new FinanceCalculator();
+
+            var manager = new FundManager(dbContext, mockGoalManager.Object, financeCalculator);
+
+            var goal = new Goal { Id = 1, Name = "Vacation", TargetAmount = 1000, CurrentAmount = 0, UserId = "user1" };
+            dbContext.Goals.Add(goal);
+            dbContext.SaveChanges();
+
+            // Act
+            manager.MakeTransaction(goal, 100, "Test deposit");
+            dbContext.SaveChanges();
+
+            // Assert
+            var transactions = dbContext.Transactions.Where(t => t.GoalId == goal.Id).ToList();
+            Assert.Single(transactions);
+            Assert.Equal(100, transactions[0].Amount);
+            Assert.Equal("Test deposit", transactions[0].Description);
         }
     }
 }

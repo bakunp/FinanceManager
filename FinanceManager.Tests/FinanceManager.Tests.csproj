@@ -18,6 +18,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FinanceManager.Core\FinanceManager.Core.csproj" />
+    <ProjectReference Include="..\FinanceManager.Application\FinanceManager.Application.csproj" />
+    <ProjectReference Include="..\FinanceManaager.Data\FinanceManager.Data.csproj" />
   </ItemGroup>
 
   <ItemGroup>

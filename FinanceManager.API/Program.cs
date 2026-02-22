@@ -1,17 +1,18 @@
 using FinanceManager.Application;
 using FinanceManager.Core;
 using FinanceManager.Data;
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-//builder.Services.AddOpenApi();
-builder.Services.AddDbContext<FinanceDbContext>();
+builder.Services.AddDbContext<FinanceDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? "Data Source=finance.db"));
 builder.Services.AddScoped<IGoalManager, GoalManager>();
 builder.Services.AddScoped<IFundManager, FundManager>();
 builder.Services.AddScoped<IFinanceCalculator, FinanceCalculator>();
@@ -22,24 +23,35 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowReact",
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173") // React app URL
-                  .AllowAnyHeader()
-                  .AllowAnyMethod();
+            policy.WithOrigins(
+                    "http://localhost:5173",
+                    "http://localhost:5174",
+                    "https://finance.wilcza.ovh"
+                )
+                .AllowAnyHeader()
+                .AllowAnyMethod();
         });
 });
-builder.Services.AddControllers();
 
+// JWT Authentication
+var jwtKey = builder.Configuration["Jwt:Key"]!;
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
 })
-.AddCookie()
-.AddGoogle(googleOptions =>
+.AddJwtBearer(options =>
 {
-    googleOptions.ClientId = "921612470048";
-    googleOptions.ClientSecret = "maent8s7sd71jo1gbpa7b7oeorgq5v6q.apps.googleusercontent.com";
-    googleOptions.CallbackPath = "/signin-google";
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
 });
 
 builder.Services.AddEndpointsApiExplorer();
@@ -58,13 +70,16 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    //app.MapOpenApi();
 }
 
 app.UseCors("AllowReact");
 
-app.UseHttpsRedirection();
+if (app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();

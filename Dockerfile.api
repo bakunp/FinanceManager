@@ -1,0 +1,33 @@
+# Build stage
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+WORKDIR /src
+
+# Copy project files
+COPY FinanceManager.Core/FinanceManager.Core.csproj FinanceManager.Core/
+COPY FinanceManaager.Data/FinanceManager.Data.csproj FinanceManaager.Data/
+COPY FinanceManager.Application/FinanceManager.Application.csproj FinanceManager.Application/
+COPY FinanceManager.API/FinanceManager.API.csproj FinanceManager.API/
+
+# Restore
+RUN dotnet restore FinanceManager.API/FinanceManager.API.csproj
+
+# Copy everything and build
+COPY FinanceManager.Core/ FinanceManager.Core/
+COPY FinanceManaager.Data/ FinanceManaager.Data/
+COPY FinanceManager.Application/ FinanceManager.Application/
+COPY FinanceManager.API/ FinanceManager.API/
+
+RUN dotnet publish FinanceManager.API/FinanceManager.API.csproj -c Release -o /app/publish
+
+# Runtime stage
+FROM mcr.microsoft.com/dotnet/aspnet:10.0
+WORKDIR /app
+COPY --from=build /app/publish .
+
+# SQLite database will be stored in a volume
+VOLUME /app/data
+ENV ASPNETCORE_URLS=http://+:5000
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+EXPOSE 5000
+ENTRYPOINT ["dotnet", "FinanceManager.API.dll"]

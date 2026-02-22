@@ -1,0 +1,31 @@
+# .NET
+**/bin/
+**/obj/
+**/.vs/
+**/TestResults/
+**/CoverageReport/
+**/BenchmarkSuite1/
+
+# Node
+**/node_modules/
+**/dist/
+**/.env
+**/.env.local
+
+# Git
+.git
+.github
+.gitignore
+.gitattributes
+
+# IDE
+.vscode-server
+*.user
+
+# Database
+*.db
+
+# Misc
+README.md
+coverage.*
+get-docker.sh

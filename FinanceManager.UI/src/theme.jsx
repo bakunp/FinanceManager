@@ -2,7 +2,7 @@ import { createContext, useState, useMemo, useContext } from 'react';
 import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 
-export const ColorModeContext = createContext({ toggleColorMode: () => {} });
+export const ColorModeContext = createContext({ toggleColorMode: () => { } });
 
 export const useColorMode = () => useContext(ColorModeContext);
 
@@ -10,34 +10,48 @@ const getDesignTokens = (mode) => ({
     palette: {
         mode,
         ...(mode === 'light'
-        ? {
-            // palette values for light mode
-            primary: { main: '#2563EB' },
-            secondary: { main: '#475569' },
-            divider: '#E2E8F0',
-            background: {
-                default: '#F1F5F9',
-                paper: '#FFFFFF',
-            },
-            text: {
-                primary: '#0F172A',
-                secondary: '#475569',
-            },
-        }
-        : {
-            // palette values for dark mode
-            primary: { main: '#38BDF8' }, // A vibrant cyan
-            secondary: { main: '#94A3B8' },
-            divider: 'rgba(148, 163, 184, 0.2)',
-            background: {
-                default: '#020617', // Very dark navy
-                paper: '#0F172A', // Slightly lighter navy for surfaces
-            },
-            text: {
-                primary: '#E2E8F0',
-                secondary: '#94A3B8',
-            },
-        }),
+            ? {
+                primary: { main: '#4F46E5' },       // indigo-600
+                secondary: { main: '#F59E0B' },      // amber-500 (accent)
+                divider: '#E2E8F0',
+                background: {
+                    default: '#F5F3FF',              // lekki fiolet
+                    paper: '#FFFFFF',
+                    surface: '#EDE9FE',              // indigo-50-ish
+                    elevated: '#E0E7FF',             // indigo-100
+                },
+                text: {
+                    primary: '#1E1B4B',              // indigo-950
+                    secondary: '#6366F1',            // indigo-500 muted
+                },
+                accent: {
+                    main: '#F59E0B',
+                    light: '#FDE68A',
+                    dark: '#D97706',
+                    contrastText: '#FFFFFF',
+                },
+            }
+            : {
+                primary: { main: '#818CF8' },        // indigo-400
+                secondary: { main: '#FBBF24' },      // amber-400 (accent)
+                divider: 'rgba(129, 140, 248, 0.15)',
+                background: {
+                    default: '#0F0E1A',              // deep dark indigo
+                    paper: '#1A1830',                // card surfaces
+                    surface: '#252340',              // elevated surfaces
+                    elevated: 'rgba(129, 140, 248, 0.08)',
+                },
+                text: {
+                    primary: '#E0E7FF',              // indigo-100
+                    secondary: '#A5B4FC',            // indigo-300
+                },
+                accent: {
+                    main: '#FBBF24',
+                    light: '#FDE68A',
+                    dark: '#F59E0B',
+                    contrastText: '#1E1B4B',
+                },
+            }),
     },
     typography: {
         fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
@@ -59,11 +73,19 @@ const getDesignTokens = (mode) => ({
 });
 
 export const AppThemeProvider = ({ children }) => {
-    const [mode, setMode] = useState('light');
+    const [mode, setMode] = useState(() => {
+        const saved = localStorage.getItem('themeMode');
+        return saved === 'dark' || saved === 'light' ? saved : 'light';
+    });
+
     const colorMode = useMemo(
         () => ({
             toggleColorMode: () => {
-                setMode((prevMode) => (prevMode === 'light' ? 'dark' : 'light'));
+                setMode((prevMode) => {
+                    const newMode = prevMode === 'light' ? 'dark' : 'light';
+                    localStorage.setItem('themeMode', newMode);
+                    return newMode;
+                });
             },
         }),
         [],

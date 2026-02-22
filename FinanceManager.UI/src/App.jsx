@@ -1,42 +1,49 @@
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { Route, Routes, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Expenses from './pages/Expenses';
 import LandingPage from './pages/Landing';
+import { isLoggedIn, logout as authLogout, getStoredUser } from './services/authService';
 
 function App() {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(() => isLoggedIn());
+    const [user, setUser] = useState(() => getStoredUser());
 
     useEffect(() => {
-        const auth = localStorage.getItem('isAuthenticated');
-        if (auth === 'true') {
-            setIsAuthenticated(true);
+        // Check token validity on mount
+        if (!isLoggedIn()) {
+            setIsAuthenticated(false);
+            setUser(null);
         }
     }, []);
 
     const handleLogin = () => {
-        localStorage.setItem('isAuthenticated', 'true');
         setIsAuthenticated(true);
+        setUser(getStoredUser());
+    };
+
+    const handleLogout = () => {
+        authLogout();
+        setIsAuthenticated(false);
+        setUser(null);
     };
 
     return (
-        <BrowserRouter>
-            <Routes>
-                {isAuthenticated ? (
-                    <Route path="/" element={<Layout/>}>
-                        <Route index element={<Dashboard />}/>
-                        <Route path="expenses" element={<Expenses />}/>
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </Route>
-                ) : (
-                    <>
-                        <Route path="/" element={<LandingPage onLogin={handleLogin} />} />
-                        <Route path="*" element={<Navigate to="/" replace />} />
-                    </>
-                )}
-            </Routes>
-        </BrowserRouter>
+        <Routes>
+            {isAuthenticated ? (
+                <Route path="/" element={<Layout onLogout={handleLogout} user={user} />}>
+                    <Route index element={<Dashboard />} />
+                    <Route path="expenses" element={<Expenses />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </Route>
+            ) : (
+                <>
+                    <Route path="/" element={<LandingPage onLogin={handleLogin} />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                </>
+            )}
+        </Routes>
     )
 }
 

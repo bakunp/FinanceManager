@@ -1,70 +1,40 @@
+import { apiGet, apiPost, apiPut, apiDelete } from './apiClient';
 
-const url = 'https://localhost:7021/api/FixedExpense';
-
-export const addFixedExpense = async (expenceData) => {
-    try{
-        const response = await fetch(url, {
-            method: 'POST',
-            headers:{
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(expenceData)
-        });
-        if(!response.ok){
-            throw new Error("Add new FixedExpence Failed");
-        }
-
+export const addFixedExpense = async (expenseData) => {
+    try {
+        await apiPost('/FixedExpense', expenseData);
         return true;
-    }
-    catch(error){
-        console.error(error);
+    } catch (error) {
+        console.error('Add FixedExpense Error:', error);
         return false;
     }
-}
+};
 
 export const getFixedExpenses = async () => {
-    try{
-        const response = await fetch(url);
-
-        if(!response.ok){
-            throw new Error("Get expenses failed");
-        }
-        return await response.json();
+    try {
+        return await apiGet('/FixedExpense');
+    } catch (error) {
+        console.error('Get FixedExpenses Error:', error);
+        return [];
     }
-    catch (error){
-        console.error(error)
-        return[];
-    }
-}
+};
 
 export const modifyFixedExpense = async (expenseData) => {
-    try{
-        const response = await fetch(url,{
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(expenseData)
-        })
-        if(!response.ok){
-            throw new Error("Modify expense failed");
-        }
+    try {
+        await apiPut('/FixedExpense', expenseData);
         return true;
-    }
-    catch (error){
-        console.error(error);
+    } catch (error) {
+        console.error('Modify FixedExpense Error:', error);
         return false;
     }
-}
+};
 
 export const removeFixedExpense = async (id) => {
-    try{
-        const response = await fetch(`${url}/${id}`, {
-            method: 'DELETE'
-        });
+    try {
+        await apiDelete(`/FixedExpense/${id}`);
         return true;
-    } catch (error){
-        console.error(error);
+    } catch (error) {
+        console.error('Remove FixedExpense Error:', error);
         return false;
     }
-}
+};

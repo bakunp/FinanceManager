@@ -1,40 +1,29 @@
-import { Box, Modal, TextField, Typography, MenuItem, FormControlLabel, Checkbox, Button, InputAdornment } from '@mui/material'; 
+import { Box, Modal, TextField, Typography, MenuItem, FormControlLabel, Checkbox, Button, InputAdornment } from '@mui/material';
 import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs from 'dayjs';
 import { useState, useEffect } from 'react';
 import { addGoal, modifyGoal } from '../services/goalService';
-
-const style = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 400,
-    bgcolor: 'background.paper',
-    borderRadius: 3,
-    boxShadow: 24,
-    p: 4,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2.5,
-    outline: 'none'
-}
+import { modalBoxStyle } from './modalStyles';
+import { useNotification } from './NotificationProvider';
 
 export default function GoalModal({ open, onGoalAdded, goalToEdit, onClose }) {
-    
+    const { showSuccess, showError } = useNotification();
+
     const [name, setName] = useState('');
     const [priority, setPriority] = useState(1);
     const [amount, setAmount] = useState('');
     const [date, setDate] = useState(dayjs());
     const [skipDate, setSkipDate] = useState(true);
-    
+    const [errors, setErrors] = useState({});
+
     const resetForm = () => {
         setName('');
         setAmount('');
         setDate(dayjs());
         setPriority(1);
         setSkipDate(true);
+        setErrors({});
     }
 
     useEffect(() => {
@@ -43,7 +32,7 @@ export default function GoalModal({ open, onGoalAdded, goalToEdit, onClose }) {
                 setName(goalToEdit.name);
                 setAmount(goalToEdit.targetAmount);
                 setPriority(goalToEdit.priority);
-                
+
                 if (goalToEdit.targetDate) {
                     setDate(dayjs(goalToEdit.targetDate));
                     setSkipDate(false);
@@ -54,12 +43,24 @@ export default function GoalModal({ open, onGoalAdded, goalToEdit, onClose }) {
             } else {
                 resetForm();
             }
+            setErrors({});
         }
     }, [goalToEdit, open]);
 
+    const validate = () => {
+        const newErrors = {};
+        if (!name.trim()) newErrors.name = 'Goal name is required';
+        const numAmount = parseFloat(amount);
+        if (!amount || isNaN(numAmount) || numAmount <= 0) newErrors.amount = 'Amount must be greater than 0';
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
+    };
+
     const handleSave = async () => {
+        if (!validate()) return;
+
         const goalData = {
-            name: name,
+            name: name.trim(),
             targetAmount: parseFloat(amount),
             targetDate: skipDate ? null : (date ? date.toISOString() : null),
             priority: parseInt(priority)
@@ -73,16 +74,17 @@ export default function GoalModal({ open, onGoalAdded, goalToEdit, onClose }) {
             } else {
                 result = await addGoal(goalData);
             }
-            
-            if(result) {
-                if(onGoalAdded) onGoalAdded();
+
+            if (result) {
+                showSuccess(goalToEdit ? 'Goal updated successfully' : 'Goal created successfully');
+                if (onGoalAdded) onGoalAdded();
                 onClose();
             } else {
-                alert("Operation failed");
+                showError("Operation failed. Please try again.");
             }
         } catch (error) {
             console.error(error);
-            alert("An error occurred while saving the goal.");
+            showError("An error occurred while saving the goal.");
         }
     }
 
@@ -92,7 +94,7 @@ export default function GoalModal({ open, onGoalAdded, goalToEdit, onClose }) {
             onClose={onClose}
         >
             <LocalizationProvider dateAdapter={AdapterDayjs}>
-                <Box sx={style}>
+                <Box sx={modalBoxStyle}>
                     <Typography variant='h5' component='h2' align="center" fontWeight="bold" mb={1}>
                         {goalToEdit ? "Edit Goal" : "Add New Goal"}
                     </Typography>
@@ -102,7 +104,9 @@ export default function GoalModal({ open, onGoalAdded, goalToEdit, onClose }) {
                         label="Goal Name"
                         variant="outlined"
                         value={name}
-                        onChange={(e) => setName(e.target.value)}
+                        onChange={(e) => { setName(e.target.value); if (errors.name) setErrors(prev => ({ ...prev, name: '' })); }}
+                        error={!!errors.name}
+                        helperText={errors.name}
                     />
                     <TextField
                         fullWidth
@@ -110,7 +114,9 @@ export default function GoalModal({ open, onGoalAdded, goalToEdit, onClose }) {
                         label="Target Amount"
                         type='number'
                         value={amount}
-                        onChange={(e) => setAmount(e.target.value)}
+                        onChange={(e) => { setAmount(e.target.value); if (errors.amount) setErrors(prev => ({ ...prev, amount: '' })); }}
+                        error={!!errors.amount}
+                        helperText={errors.amount}
                         InputProps={{
                             endAdornment: <InputAdornment position="end">PLN</InputAdornment>,
                         }}
@@ -121,16 +127,16 @@ export default function GoalModal({ open, onGoalAdded, goalToEdit, onClose }) {
                         label="Target Date"
                         value={date}
                         onChange={(newValue) => setDate(newValue)}
-                        slotProps={{ textField: { fullWidth: true } }} 
+                        slotProps={{ textField: { fullWidth: true } }}
                     />
 
                     <FormControlLabel
                         control={
-                            <Checkbox 
+                            <Checkbox
                                 checked={skipDate}
-                                onChange={(e) => setSkipDate(e.target.checked)} 
+                                onChange={(e) => setSkipDate(e.target.checked)}
                             />
-                        } 
+                        }
                         label="Goal without date"
                     />
 
@@ -149,20 +155,19 @@ export default function GoalModal({ open, onGoalAdded, goalToEdit, onClose }) {
                     </TextField>
 
                     <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                        <Button 
-                            fullWidth 
-                            variant="outlined" 
-                            color="error" 
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            color="error"
                             onClick={onClose}
                         >
                             Cancel
                         </Button>
-                        <Button 
-                            fullWidth 
-                            variant='contained' 
-                            size="large" 
+                        <Button
+                            fullWidth
+                            variant='contained'
+                            size="large"
                             onClick={handleSave}
-                            disabled={!name || !amount}
                         >
                             {goalToEdit ? "Save Changes" : "Create Goal"}
                         </Button>

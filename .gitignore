@@ -368,3 +368,12 @@ FodyWeavers.xsd
 /FinanceManager.API/finance.db
 /FinanceManager.API/finance.db-shm
 /FinanceManager.API/finance.db-wal
+
+# Environment variables — contain secrets, never commit!
+.env
+.env.*
+!.env.example
+
+# Frontend build & dependencies
+FinanceManager.UI/node_modules/
+FinanceManager.UI/dist/

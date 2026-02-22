@@ -1,19 +1,17 @@
 ﻿using FinanceManager.Core;
 using FinanceManager.Data;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FinanceManager.Application
 {
-    public  class FixedExpenseManager(FinanceDbContext db) : IFixedExpenseManager
+    public class FixedExpenseManager(FinanceDbContext db) : IFixedExpenseManager
     {
         private readonly FinanceDbContext _dbContext = db;
 
-        public void AddFixedExpense(string name, decimal amount, DateTime firstPaymentDate, int interval, int frequency)
+        public void AddFixedExpense(string userId, string name, decimal amount, DateTime firstPaymentDate, int interval, int frequency)
         {
             var fixedExpense = new FixedExpense
             {
+                UserId = userId,
                 Name = name,
                 Amount = amount,
                 FirstPaymentDate = firstPaymentDate,
@@ -24,9 +22,14 @@ namespace FinanceManager.Application
             _dbContext.SaveChanges();
         }
 
-        public List<FixedExpense> GetAllFixedExpenses()
+        public List<FixedExpense> GetAllFixedExpenses(string userId)
         {
-            return _dbContext.FixedExpenses.ToList();
+            return _dbContext.FixedExpenses.Where(e => e.UserId == userId).ToList();
+        }
+
+        public FixedExpense? GetById(int id)
+        {
+            return _dbContext.FixedExpenses.Find(id);
         }
 
         public void RemoveFixedExpense(int id)

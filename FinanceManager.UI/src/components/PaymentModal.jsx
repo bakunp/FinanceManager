@@ -1,36 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { 
-    Box, Button, Modal, TextField, Typography, Switch, Stack, 
-    List, ListItem, ListItemButton, ListItemText, ListItemIcon, 
-    Radio, Paper, InputAdornment, 
-    FormControlLabel,
-    Checkbox
+import { useState, useEffect } from 'react';
+import {
+    Box, Button, Modal, TextField, Typography, Switch, Stack,
+    List, ListItem, ListItemButton, ListItemText, ListItemIcon,
+    Radio, Paper, InputAdornment, FormControlLabel, Checkbox
 } from '@mui/material';
 import SavingsIcon from '@mui/icons-material/Savings';
 import { addFundsAutomatically, addFundsManually } from '../services/fundService';
-
-const style = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 400,
-    bgcolor: 'background.paper',
-    borderRadius: 3,
-    boxShadow: 24,
-    p: 4,
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 2.5,
-    outline: 'none'
-};
+import { modalBoxStyle } from './modalStyles';
+import { useNotification } from './NotificationProvider';
 
 export default function PaymentModal({ open, onClose, onPaymentCreated, allGoals }) {
+    const { showSuccess, showError } = useNotification();
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
     const [isAutomatic, setIsAutomatic] = useState(false);
     const [selectedGoalId, setSelectedGoalId] = useState(null);
     const [skipDescription, setSkipDescription] = useState(true);
+    const [errors, setErrors] = useState({});
 
     const resetForm = () => {
         setAmount('');
@@ -38,6 +24,7 @@ export default function PaymentModal({ open, onClose, onPaymentCreated, allGoals
         setIsAutomatic(false);
         setSelectedGoalId(null);
         setSkipDescription(true);
+        setErrors({});
     };
 
     useEffect(() => {
@@ -48,26 +35,41 @@ export default function PaymentModal({ open, onClose, onPaymentCreated, allGoals
 
     const handleSwitchChange = (event) => {
         setIsAutomatic(event.target.checked);
+        setErrors({});
+    };
+
+    const validate = () => {
+        const newErrors = {};
+        const numAmount = parseFloat(amount);
+        if (!amount || isNaN(numAmount) || numAmount <= 0) newErrors.amount = 'Amount must be greater than 0';
+        if (!isAutomatic && !selectedGoalId) newErrors.goal = 'Please select a goal';
+        setErrors(newErrors);
+        return Object.keys(newErrors).length === 0;
     };
 
     const handleSave = async () => {
-        const paymentData = {
-            amount: parseFloat(amount),
-            description: description,
-            type: isAutomatic ? 'Automatic' : 'Manual',
-            goalId: selectedGoalId
-        };
+        if (!validate()) return;
 
         let result;
 
-        if(isAutomatic) {
-            result = await addFundsAutomatically(paymentData.amount, paymentData.description);
-        } else {
-            result = await addFundsManually(paymentData.goalId, paymentData.amount, paymentData.description); 
-        }
+        try {
+            if (isAutomatic) {
+                result = await addFundsAutomatically(parseFloat(amount), description);
+            } else {
+                result = await addFundsManually(selectedGoalId, parseFloat(amount), description);
+            }
 
-        if (onPaymentCreated) onPaymentCreated();
-        onClose();
+            if (result) {
+                showSuccess('Payment saved successfully');
+                if (onPaymentCreated) onPaymentCreated();
+                onClose();
+            } else {
+                showError('Failed to save payment. Please try again.');
+            }
+        } catch (error) {
+            console.error(error);
+            showError('An error occurred while saving the payment.');
+        }
     };
 
     return (
@@ -75,7 +77,7 @@ export default function PaymentModal({ open, onClose, onPaymentCreated, allGoals
             open={open}
             onClose={onClose}
         >
-            <Box sx={style}>
+            <Box sx={modalBoxStyle}>
                 <Typography variant='h5' align="center" fontWeight="bold">
                     Add New Payment
                 </Typography>
@@ -86,7 +88,7 @@ export default function PaymentModal({ open, onClose, onPaymentCreated, allGoals
                     sx={{ alignItems: 'center', justifyContent: 'center' }}
                 >
                     <Typography color={!isAutomatic ? "primary" : "text.secondary"}>Manual</Typography>
-                    <Switch 
+                    <Switch
                         checked={isAutomatic}
                         onChange={handleSwitchChange}
                     />
@@ -99,20 +101,22 @@ export default function PaymentModal({ open, onClose, onPaymentCreated, allGoals
                     label="Amount"
                     type='number'
                     value={amount}
-                    onChange={(e) => setAmount(e.target.value)}
+                    onChange={(e) => { setAmount(e.target.value); if (errors.amount) setErrors(prev => ({ ...prev, amount: '' })); }}
+                    error={!!errors.amount}
+                    helperText={errors.amount}
                     InputProps={{
                         endAdornment: <InputAdornment position="end">PLN</InputAdornment>,
                     }}
                 />
                 <TextField
-                        disabled={skipDescription}
-                        required
-                        fullWidth
-                        label="Description"
-                        variant="outlined"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                    />
+                    disabled={skipDescription}
+                    required
+                    fullWidth
+                    label="Description"
+                    variant="outlined"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                />
                 <FormControlLabel
                     control={
                         <Checkbox
@@ -122,40 +126,40 @@ export default function PaymentModal({ open, onClose, onPaymentCreated, allGoals
                                 if (e.target.checked) {
                                     setDescription('Automatic fund allocation');
                                 }
-                            }} 
+                            }}
                         />
-                    } 
+                    }
                     label="Default description"
                 />
 
                 {!isAutomatic && (
                     <Box>
-                        <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
-                            Select Goal:
+                        <Typography variant="subtitle2" color={errors.goal ? "error" : "text.secondary"} sx={{ mb: 1 }}>
+                            Select Goal: {errors.goal && <span style={{ fontWeight: 400 }}>({errors.goal})</span>}
                         </Typography>
-                        
-                        <Paper variant="outlined" sx={{ maxHeight: 200, overflow: 'auto' }}>
+
+                        <Paper variant="outlined" sx={{ maxHeight: 200, overflow: 'auto', borderColor: errors.goal ? 'error.main' : 'divider' }}>
                             {allGoals && allGoals.length > 0 ? (
                                 <List dense>
                                     {allGoals.map((goal) => {
                                         const isSelected = selectedGoalId === goal.id;
                                         return (
                                             <ListItem key={goal.id} disablePadding divider>
-                                                <ListItemButton 
-                                                    onClick={() => setSelectedGoalId(goal.id)}
+                                                <ListItemButton
+                                                    onClick={() => { setSelectedGoalId(goal.id); if (errors.goal) setErrors(prev => ({ ...prev, goal: '' })); }}
                                                     selected={isSelected}
                                                 >
                                                     <ListItemIcon>
-                                                        <Radio 
-                                                            checked={isSelected} 
+                                                        <Radio
+                                                            checked={isSelected}
                                                             edge="start"
                                                             tabIndex={-1}
                                                             disableRipple
                                                         />
                                                     </ListItemIcon>
-                                                    <ListItemText 
-                                                        primary={goal.name} 
-                                                        secondary={`Target: ${goal.targetAmount} PLN`} 
+                                                    <ListItemText
+                                                        primary={goal.name}
+                                                        secondary={`Target: ${goal.targetAmount} PLN`}
                                                     />
                                                     {isSelected && <SavingsIcon color="primary" fontSize="small" />}
                                                 </ListItemButton>
@@ -179,20 +183,19 @@ export default function PaymentModal({ open, onClose, onPaymentCreated, allGoals
                 )}
 
                 <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                    <Button 
-                        fullWidth 
-                        variant="outlined" 
-                        color="error" 
+                    <Button
+                        fullWidth
+                        variant="outlined"
+                        color="error"
                         onClick={onClose}
                     >
                         Cancel
                     </Button>
-                    <Button 
-                        fullWidth 
-                        variant='contained' 
-                        size="large" 
+                    <Button
+                        fullWidth
+                        variant='contained'
+                        size="large"
                         onClick={handleSave}
-                        disabled={!amount || (!isAutomatic && !selectedGoalId)}
                     >
                         Save Payment
                     </Button>

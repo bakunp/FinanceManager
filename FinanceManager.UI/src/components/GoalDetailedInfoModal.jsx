@@ -1,27 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { 
-    Box, Modal, Typography, IconButton, CircularProgress, 
-    Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper 
+import { useEffect, useState } from 'react';
+import {
+    Box, Modal, Typography, IconButton, CircularProgress,
+    Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import dayjs from 'dayjs';
 import { getTransactionHistory } from '../services/goalService';
-
-const style = {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: 'translate(-50%, -50%)',
-    width: 600,
-    bgcolor: 'background.paper',
-    borderRadius: 3,
-    boxShadow: 24,
-    p: 4,
-    outline: 'none',
-    maxHeight: '90vh',
-    display: 'flex',
-    flexDirection: 'column'
-};
+import { wideModalBoxStyle } from './modalStyles';
 
 export default function GoalDetailedInfoModal({ openedGoal, onClose }) {
     const [history, setHistory] = useState([]);
@@ -49,7 +34,7 @@ export default function GoalDetailedInfoModal({ openedGoal, onClose }) {
             open={!!openedGoal}
             onClose={onClose}
         >
-            <Box sx={style}>
+            <Box sx={wideModalBoxStyle}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                     <Box>
                         <Typography variant='h3' fontWeight="bold">
@@ -64,14 +49,14 @@ export default function GoalDetailedInfoModal({ openedGoal, onClose }) {
                     </IconButton>
                 </Box>
 
-                <Box sx={(theme) => ({ 
-                    mb: 3, 
-                    p: 2, 
-                    bgcolor: theme.palette.mode === 'dark' ? 'action.hover' : '#f5f5f5', 
-                    borderRadius: 2, 
-                    display: 'flex', 
-                    justifyContent: 'space-around' 
-                })}>
+                <Box sx={{
+                    mb: 3,
+                    p: 2,
+                    bgcolor: 'background.surface',
+                    borderRadius: 2,
+                    display: 'flex',
+                    justifyContent: 'space-around'
+                }}>
                     <Box textAlign="center">
                         <Typography variant="caption" color="text.secondary">Current amount</Typography>
                         <Typography variant="h6" color="success.main" fontWeight="bold">
@@ -79,10 +64,10 @@ export default function GoalDetailedInfoModal({ openedGoal, onClose }) {
                         </Typography>
                     </Box>
                     <Box textAlign="center">
-                         <Typography variant="caption" color="text.secondary">Total left</Typography>
-                         <Typography variant="h6" fontWeight="bold">
+                        <Typography variant="caption" color="text.secondary">Total left</Typography>
+                        <Typography variant="h6" fontWeight="bold">
                             {Math.max(0, openedGoal.targetAmount - openedGoal.currentAmount)} PLN
-                         </Typography>
+                        </Typography>
                     </Box>
                 </Box>
 
@@ -93,7 +78,7 @@ export default function GoalDetailedInfoModal({ openedGoal, onClose }) {
                         <CircularProgress />
                     </Box>
                 ) : (
-                    <TableContainer component={Paper} sx={{ flexGrow: 1, overflow: 'auto', boxShadow: 'none', border: '1px solid #e0e0e0' }}>
+                    <TableContainer component={Paper} sx={{ flexGrow: 1, overflow: 'auto', boxShadow: 'none', border: '1px solid', borderColor: 'divider' }}>
                         <Table stickyHeader size="small">
                             <TableHead>
                                 <TableRow>
@@ -116,7 +101,7 @@ export default function GoalDetailedInfoModal({ openedGoal, onClose }) {
                                                 {dayjs(row.date).format('DD.MM.YYYY HH:mm')}
                                             </TableCell>
                                             <TableCell>{row.description || "Transaction"}</TableCell>
-                                            <TableCell align="right" sx={{ fontWeight: 'bold', color: 'green' }}>
+                                            <TableCell align="right" sx={{ fontWeight: 'bold', color: 'success.main' }}>
                                                 +{row.amount} PLN
                                             </TableCell>
                                         </TableRow>

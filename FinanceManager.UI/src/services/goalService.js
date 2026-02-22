@@ -1,83 +1,49 @@
-
-const url = 'https://localhost:7021/api/Goals';
+import { apiGet, apiPost, apiPut, apiDelete } from './apiClient';
 
 export const addGoal = async (goalData) => {
-    try{
-        const response = await fetch(url, {
-            method: 'POST',
-            headers:{
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(goalData)
-        });
-        if(!response.ok){
-            throw new Error("Add Goal Error.");
-        }
-
+    try {
+        await apiPost('/Goals', goalData);
         return true;
-    } catch (error){
-        console.error(error);
+    } catch (error) {
+        console.error('Add Goal Error:', error);
         return false;
     }
 };
 
 export const modifyGoal = async (goalData) => {
-    try{
-        const response = await fetch(url, {
-            method: 'PUT',
-            headers:{
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(goalData)
-        });
-        if(!response.ok){
-            throw new Error("Modify Goal Error.");
-        }
-
+    try {
+        await apiPut('/Goals', goalData);
         return true;
-    } catch (error){
-        console.error(error);
+    } catch (error) {
+        console.error('Modify Goal Error:', error);
         return false;
     }
 };
 
 export const getAllGoals = async () => {
-    try{
-        const response = await fetch(url);
-        if(!response.ok){
-            throw new Error("Get All Goals Error.");
-        }
-        return await response.json();
-    } catch (error){
-        console.error(error);
-        return[];
-    }
-}
-
-export const removeGoal = async (id) => {
-    try{
-        const response = await fetch(`${url}/${id}`, {
-            method: 'DELETE'
-        });
-        return true;
-    } catch (error){
-        console.error(error);
-        return false;
-    }
-}
-
-export const getTransactionHistory = async (id) => {
-    try{
-        const response = await fetch(`${url}/${id}/history`, {
-            method: 'GET'
-        });
-        if(!response.ok)
-        {
-            throw new Error("Get transactions history failed.");
-        }
-        return await response.json();
-    } catch (error){
-        console.error(error);
+    try {
+        return await apiGet('/Goals');
+    } catch (error) {
+        console.error('Get All Goals Error:', error);
         return [];
     }
-}
+};
+
+export const removeGoal = async (id) => {
+    try {
+        await apiDelete(`/Goals/${id}`);
+        return true;
+    } catch (error) {
+        console.error('Remove Goal Error:', error);
+        return false;
+    }
+};
+
+export const getTransactionHistory = async (id) => {
+    try {
+        return await apiGet(`/Goals/${id}/history`);
+    } catch (error) {
+        console.error('Get Transaction History Error:', error);
+        return [];
+    }
+};

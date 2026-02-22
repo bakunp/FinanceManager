@@ -1,0 +1,39 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: finance-api
+    restart: unless-stopped
+    volumes:
+      - api-data:/app/data
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5000
+      - Jwt__Key=${JWT_KEY}
+      - Jwt__Issuer=FinanceManager.API
+      - Jwt__Audience=FinanceManager.UI
+      - GoogleAuth__ClientId=${GOOGLE_CLIENT_ID}
+      - ConnectionStrings__DefaultConnection=Data Source=/app/data/finance.db
+    networks:
+      - finance-net
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: finance-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    networks:
+      - finance-net
+
+volumes:
+  api-data:
+
+networks:
+  finance-net:
+    driver: bridge

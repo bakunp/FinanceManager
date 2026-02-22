@@ -1,20 +1,36 @@
-import { Box, Button, Chip, IconButton, Paper, Typography, Grid, Avatar, Tooltip, useTheme } from "@mui/material";
+import { Box, Button, Chip, IconButton, Paper, Typography, Grid, Avatar, Tooltip, useTheme, Skeleton } from "@mui/material";
 import { DataGrid } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import { useEffect, useState } from "react";
 import { getFixedExpenses, removeFixedExpense } from "../services/fixedExpenseService";
 import { Delete, Edit, TrendingDown, Receipt, CalendarToday, CheckCircle, Cancel } from "@mui/icons-material";
 import FixedExpenseModal from "../components/FixedExpenseModal";
+import ConfirmDialog from "../components/ConfirmDialog";
+import { useNotification } from "../components/NotificationProvider";
 import dayjs from 'dayjs';
+
+function SummaryCardSkeleton() {
+    return (
+        <Paper elevation={0} sx={{ p: 3, borderRadius: 5, border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 2.5 }}>
+            <Skeleton variant="circular" width={56} height={56} />
+            <Box>
+                <Skeleton variant="text" width={80} height={16} />
+                <Skeleton variant="text" width={120} height={36} />
+            </Box>
+        </Paper>
+    );
+}
 
 export default function Expenses() {
     const theme = useTheme();
+    const { showSuccess, showError } = useNotification();
     const [rows, setRows] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [expenseToEdit, setExpenseToEdit] = useState(null);
     const [paymentStatus, setPaymentStatus] = useState({});
+    const [confirmDialog, setConfirmDialog] = useState({ open: false, id: null });
 
     const processData = (data) => {
         const today = dayjs();
@@ -22,8 +38,6 @@ export default function Expenses() {
             const originalDay = dayjs(item.firstPaymentDate).date();
             let currentPaymentDate = today.date(originalDay).startOf('day');
 
-            // If the day doesn't exist in current month (e.g. 31st in Feb), 
-            // dayjs automatically rolls it to the last day of the month.
             if (originalDay > today.daysInMonth()) {
                 currentPaymentDate = today.endOf('month').startOf('day');
             }
@@ -74,11 +88,19 @@ export default function Expenses() {
         }
     };
 
-    const handleDelete = async (id) => {
-        if(window.confirm("Are you sure?")) {
-            const success = await removeFixedExpense(id);
-            if (success) fetchExpenses();
-            else alert("Failed to delete expense");
+    const handleDeleteRequest = (id) => {
+        setConfirmDialog({ open: true, id });
+    };
+
+    const handleDeleteConfirm = async () => {
+        const id = confirmDialog.id;
+        setConfirmDialog({ open: false, id: null });
+        const success = await removeFixedExpense(id);
+        if (success) {
+            showSuccess("Expense deleted successfully");
+            fetchExpenses();
+        } else {
+            showError("Failed to delete expense");
         }
     };
 
@@ -86,10 +108,10 @@ export default function Expenses() {
     const totalCount = rows.length;
 
     const columns = [
-        { 
-            field: 'name', 
-            headerName: 'Expense Name', 
-            flex: 1, 
+        {
+            field: 'name',
+            headerName: 'Expense Name',
+            flex: 1,
             minWidth: 200,
             renderCell: (params) => (
                 <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', color: 'text.primary' }}>
@@ -99,32 +121,32 @@ export default function Expenses() {
                 </Box>
             )
         },
-        { 
-            field: 'category', 
-            headerName: 'Category', 
+        {
+            field: 'category',
+            headerName: 'Category',
             width: 140,
             renderCell: (params) => (
                 <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                    <Chip 
-                        label={params.value || 'General'} 
-                        size="small" 
-                        sx={{ 
-                            bgcolor: 'action.hover', 
-                            color: 'text.secondary', 
+                    <Chip
+                        label={params.value || 'General'}
+                        size="small"
+                        sx={{
+                            bgcolor: 'action.hover',
+                            color: 'text.secondary',
                             fontWeight: '600',
                             borderRadius: '6px',
                             height: '24px',
                             fontSize: '0.75rem',
                             border: '1px solid',
                             borderColor: 'divider'
-                        }} 
+                        }}
                     />
                 </Box>
             )
         },
-        { 
-            field: 'displayDate', 
-            headerName: 'Due Date', 
+        {
+            field: 'displayDate',
+            headerName: 'Due Date',
             width: 160,
             renderCell: (params) => {
                 const date = dayjs(params.value);
@@ -144,9 +166,9 @@ export default function Expenses() {
                 )
             }
         },
-        { 
-            field: 'amount', 
-            headerName: 'Amount', 
+        {
+            field: 'amount',
+            headerName: 'Amount',
             width: 140,
             renderCell: (params) => (
                 <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
@@ -201,7 +223,7 @@ export default function Expenses() {
                     <IconButton size="small" onClick={() => handleEdit(params.id)}>
                         <Edit sx={{ fontSize: 18 }} />
                     </IconButton>
-                    <IconButton size="small" onClick={() => handleDelete(params.id)}>
+                    <IconButton size="small" onClick={() => handleDeleteRequest(params.id)}>
                         <Delete sx={{ fontSize: 18 }} />
                     </IconButton>
                 </Box>
@@ -220,13 +242,13 @@ export default function Expenses() {
                         {dayjs().format('MMMM YYYY')} Overview
                     </Typography>
                 </Box>
-                <Button 
-                    variant="contained" 
-                    startIcon={<AddIcon />} 
+                <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
                     onClick={handleAdd}
                     sx={{
-                        textTransform: 'none', fontWeight: 600, background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)', borderRadius: '12px',
-                        padding: '10px 24px', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)'
+                        textTransform: 'none', fontWeight: 600, background: 'linear-gradient(135deg, #FBBF24 0%, #F59E0B 100%)', color: '#1E1B4B', borderRadius: '12px',
+                        padding: '10px 24px', boxShadow: '0 4px 12px rgba(245, 158, 11, 0.35)'
                     }}
                 >
                     New Expense
@@ -235,22 +257,26 @@ export default function Expenses() {
 
             <Grid container spacing={3} sx={{ mb: 5 }}>
                 <Grid item xs={12} sm={6} md={4}>
-                    <Paper elevation={0} sx={{ p: 3, borderRadius: 5, border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 2.5, boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
-                        <Avatar sx={{ bgcolor: 'success.light', color: 'success.dark', width: 56, height: 56 }}><TrendingDown /></Avatar>
-                        <Box>
-                            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase' }}>Monthly Total</Typography>
-                            <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary' }}>{totalSum} <span style={{ fontSize: '1rem', color: 'text.secondary' }}>PLN</span></Typography>
-                        </Box>
-                    </Paper>
+                    {loading ? <SummaryCardSkeleton /> : (
+                        <Paper elevation={0} sx={{ p: 3, borderRadius: 5, border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 2.5, boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+                            <Avatar sx={{ bgcolor: 'success.light', color: 'success.dark', width: 56, height: 56 }}><TrendingDown /></Avatar>
+                            <Box>
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase' }}>Monthly Total</Typography>
+                                <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary' }}>{totalSum} <span style={{ fontSize: '1rem', color: theme.palette.text.secondary }}>PLN</span></Typography>
+                            </Box>
+                        </Paper>
+                    )}
                 </Grid>
                 <Grid item xs={12} sm={6} md={4}>
-                    <Paper elevation={0} sx={{ p: 3, borderRadius: 5, border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 2.5, boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
-                        <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.dark', width: 56, height: 56 }}><Receipt /></Avatar>
-                        <Box>
-                            <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase' }}>Active Items</Typography>
-                            <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary' }}>{totalCount}</Typography>
-                        </Box>
-                    </Paper>
+                    {loading ? <SummaryCardSkeleton /> : (
+                        <Paper elevation={0} sx={{ p: 3, borderRadius: 5, border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', gap: 2.5, boxShadow: theme.palette.mode === 'dark' ? 'none' : '0 4px 6px -1px rgba(0, 0, 0, 0.05)' }}>
+                            <Avatar sx={{ bgcolor: 'primary.light', color: 'primary.dark', width: 56, height: 56 }}><Receipt /></Avatar>
+                            <Box>
+                                <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 700, textTransform: 'uppercase' }}>Active Items</Typography>
+                                <Typography variant="h4" sx={{ fontWeight: 800, color: 'text.primary' }}>{totalCount}</Typography>
+                            </Box>
+                        </Paper>
+                    )}
                 </Grid>
             </Grid>
 
@@ -268,36 +294,45 @@ export default function Expenses() {
 
                         if (status === 'PAID') return 'row-paid';
                         if (status === 'UNPAID') return 'row-unpaid';
-                        if (isPast) return 'row-past-due'; 
+                        if (isPast) return 'row-past-due';
                         return '';
                     }}
-                    sx={{ 
+                    sx={{
                         border: 0,
-                        '& .MuiDataGrid-columnHeaders': { 
-                            bgcolor: theme.palette.mode === 'dark' ? '#0F172A' : '#F9FAFB', 
+                        '& .MuiDataGrid-columnHeaders': {
+                            bgcolor: 'background.surface',
                             borderBottom: '1px solid',
                             borderColor: 'divider',
-                            color: 'text.secondary', 
-                            fontWeight: 700, 
-                            textTransform: 'uppercase', 
-                            fontSize: '0.75rem' 
+                            color: 'text.secondary',
+                            fontWeight: 700,
+                            textTransform: 'uppercase',
+                            fontSize: '0.75rem'
                         },
-                        '& .MuiDataGrid-cell': { 
+                        '& .MuiDataGrid-cell': {
                             borderBottom: '1px solid',
                             borderColor: 'divider'
                         },
                         '& .row-paid': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(22, 163, 74, 0.2)' : '#ECFDF5', '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(22, 163, 74, 0.3)' : '#D1FAE5' } },
                         '& .row-unpaid': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(220, 38, 38, 0.2)' : '#FEF2F2', '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(220, 38, 38, 0.3)' : '#FEE2E2' } },
-                        '& .row-past-due': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : '#F9FAFB', '&:hover': { bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#F3F4F6' } }, 
+                        '& .row-past-due': { bgcolor: 'background.surface', '&:hover': { bgcolor: 'action.hover' } },
                     }}
                 />
             </Paper>
 
-            <FixedExpenseModal 
+            <FixedExpenseModal
                 open={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 onExpenseAdded={fetchExpenses}
                 expenseToEdit={expenseToEdit}
+            />
+
+            <ConfirmDialog
+                open={confirmDialog.open}
+                title="Delete Expense"
+                message="Are you sure you want to delete this expense? This action cannot be undone."
+                confirmText="Delete"
+                onConfirm={handleDeleteConfirm}
+                onCancel={() => setConfirmDialog({ open: false, id: null })}
             />
         </Box>
     );

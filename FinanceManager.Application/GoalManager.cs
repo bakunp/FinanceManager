@@ -1,9 +1,5 @@
 ﻿using FinanceManager.Core;
 using FinanceManager.Data;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FinanceManager.Application
 {
@@ -11,10 +7,11 @@ namespace FinanceManager.Application
     {
         private readonly FinanceDbContext _dbContext = db;
 
-        public void AddGoal(string name, decimal amount, DateTime? date, Goal.GoalPriorityEnum priority)
+        public void AddGoal(string userId, string name, decimal amount, DateTime? date, Goal.GoalPriorityEnum priority)
         {
             var goal = new Goal
             {
+                UserId = userId,
                 Name = name,
                 TargetAmount = amount,
                 CurrentAmount = 0m,
@@ -25,9 +22,9 @@ namespace FinanceManager.Application
             _dbContext.SaveChanges();
         }
 
-        public List<Goal> GetAllGoals()
+        public List<Goal> GetAllGoals(string userId)
         {
-            return _dbContext.Goals.ToList();
+            return _dbContext.Goals.Where(g => g.UserId == userId).ToList();
         }
 
         public Goal? GetGoalById(int id)
@@ -64,9 +61,9 @@ namespace FinanceManager.Application
             _dbContext.SaveChanges();
         }
 
-        public void RemoveAllGoals()
+        public void RemoveAllGoals(string userId)
         {
-            var goals = _dbContext.Goals.ToList();
+            var goals = _dbContext.Goals.Where(g => g.UserId == userId).ToList();
             _dbContext.Goals.RemoveRange(goals);
             _dbContext.SaveChanges();
         }

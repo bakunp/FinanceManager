@@ -1,9 +1,5 @@
 ﻿using FinanceManager.Core;
 using FinanceManager.Data;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FinanceManager.Application
 {
@@ -13,15 +9,14 @@ namespace FinanceManager.Application
         private readonly IGoalManager _goalManager = gm;
         private readonly IFinanceCalculator _financeCalculator = fc;
 
-
-        public decimal AddFundsAutomatically(decimal amount, string description, List<Goal> goalList = null)
+        public decimal AddFundsAutomatically(string userId, decimal amount, string description, List<Goal> goalList = null)
         {
             var goals = goalList;
             decimal totalOverflow = 0;
 
             if (goalList == null)
             {
-                goals = _dbContext.Goals.Where(g => g.CurrentAmount < g.TargetAmount).ToList();
+                goals = _dbContext.Goals.Where(g => g.UserId == userId && g.CurrentAmount < g.TargetAmount).ToList();
                 _financeCalculator.AdjustPriorityBasedOnTime(goals);
             }
 
@@ -44,20 +39,19 @@ namespace FinanceManager.Application
             if (totalOverflow > 0)
             {
                 var goalsLeft = goals.Where(g => g.CurrentAmount < g.TargetAmount).ToList();
-                if (goalsLeft.Count > 0) totalOverflow = AddFundsAutomatically(totalOverflow, description, goalsLeft);
+                if (goalsLeft.Count > 0) totalOverflow = AddFundsAutomatically(userId, totalOverflow, description, goalsLeft);
             }
 
             if (goalList == null) _dbContext.SaveChanges();
             return totalOverflow;
         }
 
-
         public decimal AddFundsManually(int goalId, decimal amount, string description)
         {
             var goal = _goalManager.GetGoalById(goalId) ?? throw new Exception("Goal not found");
             var overflow = CheckOverflowAndHandle(goal, amount, description);
 
-            if (overflow != 0) AddFundsAutomatically(overflow, description);
+            if (overflow != 0) AddFundsAutomatically(goal.UserId, overflow, description);
 
             _dbContext.SaveChanges();
             return overflow;

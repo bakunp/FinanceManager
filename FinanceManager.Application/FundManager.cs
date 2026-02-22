@@ -57,7 +57,7 @@ namespace FinanceManager.Application
             return overflow;
         }
 
-        public void MakeTransaction(Goal goal, decimal amount, string description = UIMessages.AutoAllocationDesc)
+        public void MakeTransaction(Goal goal, decimal amount, string description = "Automatic fund allocation")
         {
             Transaction transaction = new()
             {

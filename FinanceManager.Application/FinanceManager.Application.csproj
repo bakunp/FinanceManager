@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FinanceManaager.Data\FinanceManager.Data.csproj" />
+    <ProjectReference Include="..\FinanceManager.Data\FinanceManager.Data.csproj" />
     <ProjectReference Include="..\FinanceManager.Core\FinanceManager.Core.csproj" />
   </ItemGroup>
 

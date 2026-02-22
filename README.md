@@ -11,7 +11,7 @@ Live here 👉 **[finance.wilcza.ovh](https://finance.wilcza.ovh)**
 
 ## What does it do?
 
-The main idea — you get paid, enter the amount, and the app automatically distributes it across your savings goals based on priorities (e.g. a critical goal gets proportionally more than a low-priority one). You can also manually deposit into a specific goal.
+The main idea - you get paid, enter the amount, and the app automatically distributes it across your savings goals based on priorities (e.g. a critical goal gets proportionally more than a low-priority one). You can also manually deposit into a specific goal.
 
 On top of that:
 - Create and manage goals with priorities and deadlines
